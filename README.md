@@ -14,3 +14,6 @@ PROJECT MANAGEMENT SYSTEM(PMS)
 [POST] /api/v1/workload (int) --> return (int) # set workload for that employee / return their set workload
 [GET] /api/progress/:id () --> return project progress by project id 
 [GET] /api/progress/:id () --> set progress/return project progress by project id 
+
+
+.............
