@@ -6,3 +6,4 @@ PROJECT MANAGEMENT SYSTEM(PMS)
 -workload ต่อคน >> AVG ต่อทีม
 -Progress งาน รายสัปดาห์
 
+![image](https://github.com/user-attachments/assets/ffd2ea29-a407-4b92-a1b6-e6f1259a780d)
