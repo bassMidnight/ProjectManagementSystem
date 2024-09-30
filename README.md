@@ -6,7 +6,8 @@ PROJECT MANAGEMENT SYSTEM(PMS)
 -workload ต่อคน >> AVG ต่อทีม
 -Progress งาน รายสัปดาห์
 
-![image](https://github.com/user-attachments/assets/ffd2ea29-a407-4b92-a1b6-e6f1259a780d)
+![image](https://github.com/user-attachments/assets/2e2ff8a0-ff49-4609-b9eb-a7b6717782e3)
+
 
 [GET] /api/v1/team () --> return(teams string[]) # return all team
 [GET] /api/v1/team/member/:id () --> return(employees string[]) # return all employee in team by id
