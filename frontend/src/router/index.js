@@ -2,10 +2,16 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import WorkloadView from '@/views/WorkloadView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
+  {
+    path: '/',
+    name: 'dashboard',
+    component: DashboardView
+  },
   {
     path: '/home',
     name: 'home',
