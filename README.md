@@ -10,10 +10,14 @@ PROJECT MANAGEMENT SYSTEM(PMS)
 
 [GET] /api/v1/team () --> return(teams string[]) # return all team
 [GET] /api/v1/team/member/:id () --> return(employees string[]) # return all employee in team by id
+
 [GET] /api/v1/workload (int) --> return (int) # return their workload
 [POST] /api/v1/workload (int) --> return (int) # set workload for that employee / return their set workload
+[PUT] /api/v1/workload (int) --> return (int) # set workload for that employee / return their set workload
+
 [GET] /api/progress/:id () --> return project progress by project id 
-[GET] /api/progress/:id () --> set progress/return project progress by project id 
+[POST] /api/progress/:id () --> set progress/return project progress by project id 
+[PUT] /api/progress/:id () --> set progress/return project progress by project id 
 
 
 .............
