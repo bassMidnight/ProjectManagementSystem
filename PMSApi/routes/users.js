@@ -1,6 +1,5 @@
 var express = require('express');
 const employeeModel = require('../models/employee.model');
-const e = require('express');
 var router = express.Router();
 
 /* GET users listing. */
