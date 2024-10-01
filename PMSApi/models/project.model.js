@@ -4,7 +4,7 @@ const projectSchema = new mongoose.Schema({
     id : String,
     projectName : String,
     lead : String,
-    progress: {type: Float32Array, default: 0},
+    progress: {type: Number, default: 0},
     startDate: Date,
     completeDate: Date,
     

@@ -1,65 +1,74 @@
-// const fs = require('node:fs');
-// const csv = require('csv-parser');
-// const Employee = require('../models/employee.model'); // Import your Mongoose model
+const fs = require('node:fs');
+const csv = require('csv-parser');
+const Employee = require('../models/employee.model'); // Import your Mongoose model
+const Project = require('../models/project.model'); // Import your Mongoose model for projects
+const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
+const { set } = require('mongoose');
 
-// async function csvToDatabase() {
-//     const results = [];
+async function csvToDatabase() {
+    const columnMapping = {
+        "หัวหน้างาน": "lead",
+        "โปรเจกต์ที่กำลังทำ": "projectName",
+        "รหัสพนักงาน": "eId"
+        // Add other mappings as necessary
+    };
 
-//     // Define the mapping from CSV columns to Mongoose schema fields
-//     const columnMapping = {
-//         "รหัสพนักงาน": "eId",
-//         "หัวหน้างาน": "lead",
-//         "โปรเจกต์ที่กำลังทำ":"projectName",
-//     };
+    const projectData = []; // Array to hold project data temporarily
 
-//     return new Promise((resolve, reject) => {
-//         fs.createReadStream("../data.csv")
-//             .pipe(csv())
-//             .on('data', async (data) => {
-//                 const mappedData = {};
-//                 const projectmappedData = {};
-//                 let name, surname;
-//                 let projectName;
-//                 let lead;
-//                 for (const csvKey in columnMapping) {
-//                     if (data[csvKey]) {
-//                         if (csvKey === "หัวหน้างาน") { // Assuming this is startDate
-//                             name, surname = data[csvKey].split(" ");
-//                             lead = await Employee.findOne({name:name, surname: surname});
-//                         } else if (csvKey === "โปรเจกต์ที่กำลังทำ") { // Assuming this is onBoard
-//                             projectName = data[csvKey];
-//                         }
-//                     }
-//                 }
+    return new Promise((resolve, reject) => {
+        fs.createReadStream("./data2.csv")
+            .pipe(csv())
+            .on('data', async (data) => {
+                const mappedData = {};
+                let name, surname;
+                let projectName;
+                let lead;
+                for (const csvKey in columnMapping) {
+                    if (data[csvKey]) {
+                        if (csvKey === "หัวหน้างาน") {
+                            [name, surname] = data[csvKey].split(" "); // Fixed destructuring
+                            lead = await Employee.findOne({ name: name, surname: surname });
+                        } else if (csvKey === "โปรเจกต์ที่กำลังทำ") {
+                            projectName = data[csvKey];
+                        } else if (csvKey === "รหัสพนักงาน") {
+                            mappedData["eId"] = data[csvKey];
+                        }
+                    }
+                }
 
-//                 const projectID = str.slice(0,3) + "001";
+                const projectID = projectName.slice(0, 3) + "001"; // Generate projectID
+                projectData.push({ projectID, projectName, lead, eId: mappedData.eId }); // Store project data
+            })
+            .on('end', async () => {
+                try {
+                    for (const project of projectData) {
+                        // Create or find the project
+                        let projectDoc = await Project.findOne({ id: project.projectID }); // Check by projectID
+                        if (!projectDoc) {
+                            projectDoc = await Project.findOne({ projectName: project.projectName }); // Check by projectName
+                        }
+                        if (!projectDoc) { // Only create if it doesn't exist
+                            projectDoc = new Project({ id: project.projectID, projectName: project.projectName, lead: project.lead }); // Create new project
+                            await projectDoc.save();
+                        }
 
-//                 // Check if eId already exists in the database
-//                 const existingEmployee = await Employee.findOne({ eId: mappedData.eId });
-//                 if (!existingEmployee) {
-//                     results.push(mappedData); // Only push if it doesn't exist
-//                 } else {
-//                     //console.log(`Employee with eId ${mappedData.eId} already exists. Skipping...`);
-//                 }
-//             })
-//             .on('end', async () => {
-//                 try {
-//                     // Insert mapped data into MongoDB
-//                     if (results.length > 0) {
-//                         await Employee.insertMany(results);
-//                     }
-//                     resolve(results); // Return the inserted data
-//                 } catch (err) {
-//                     console.error(err);
-//                     reject(err); // Reject the promise on error
-//                 }
-//             })
-//             .on('error', (err) => {
-//                 console.error(err);
-//                 reject(err); // Reject the promise on error
-//             });
-//     });
-// }
+                        // Create project member entry
+                        const projectMember = new ProjectMember({ pId: projectDoc.id, eId: project.eId }); // Link member to project
+                        await projectMember.save();
+                    }
 
-// // Export the function
-// module.exports = csvToDatabase;
+                    resolve(projectData); // Return the inserted data
+                } catch (err) {
+                    console.error(err);
+                    reject(err); // Reject the promise on error
+                }
+            })
+            .on('error', (err) => {
+                console.error(err);
+                reject(err); // Reject the promise on error
+            });
+    });
+}
+
+// Export the function
+module.exports = csvToDatabase;

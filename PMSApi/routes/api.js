@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const readfile = require('../utils/readfile.js'); // Importing the function
+const projectGenerator = require('../utils/readfileProject.js')
 
 // Adding a route for /api/
 router.get('/', function(req, res, next) {
@@ -11,6 +12,7 @@ router.get('/', function(req, res, next) {
 router.get('/readfile', async function(req, res, next) {
     try {
         const data = await readfile(); // Await the imported function
+        await projectGenerator();
         console.log(data);
         res.send(data);
     } catch (error) {
