@@ -20,6 +20,30 @@ router.get('/readfile', async function(req, res, next) {
     }
 });
 
+router.get('/lead/:leadId', async function(req, res, next) {
+    try {
+      const leadId = req.params.leadId;
+      const projects = await projectModel.find({ lead: leadId }); 
+      const employeeIds = projects.map(project => project.eId); 
+      const employees = await employeeModel.find({ eId: { $in: employeeIds } }); 
+  
+      if (employees.length === 0) {
+        return res.status(404).send({
+          status: 404,
+          message: "No employees found for this lead",
+        });
+      }
+      res.send({
+        status: 200,
+        message: "success",
+        data: employees,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+
 // router.get('/v1/home/products', async (req, res) => {
 //     try {
 //       const products = await productSchema.find().lean().select('name price amount description image');

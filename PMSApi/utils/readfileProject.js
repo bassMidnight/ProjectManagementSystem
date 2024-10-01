@@ -7,16 +7,22 @@ const { set } = require('mongoose');
 
 async function csvToDatabase() {
     const columnMapping = {
-        "หัวหน้างาน": "lead",
         "โปรเจกต์ที่กำลังทำ": "projectName",
-        "รหัสพนักงาน": "eId"
+        "รหัสพนักงาน": "eId",
+        "หัวหน้างาน ": "lead",
         // Add other mappings as necessary
     };
 
     const projectData = []; // Array to hold project data temporarily
+    const existingEmployees = await Employee.find({}, { eId: 1, name: 1, surname: 1 }); // Fetch eId, name, and surname
+    const employeeMap = existingEmployees.reduce((acc, employee) => {
+        const fullName = `${employee.name} ${employee.surname}`; // Combine name and surname
+        acc[fullName] = employee.eId; // Map full name to eId
+        return acc;
+    }, {});
 
     return new Promise((resolve, reject) => {
-        fs.createReadStream("./data2.csv")
+        fs.createReadStream("./data.csv",)
             .pipe(csv())
             .on('data', async (data) => {
                 const mappedData = {};
@@ -25,9 +31,9 @@ async function csvToDatabase() {
                 let lead;
                 for (const csvKey in columnMapping) {
                     if (data[csvKey]) {
-                        if (csvKey === "หัวหน้างาน") {
-                            [name, surname] = data[csvKey].split(" "); // Fixed destructuring
-                            lead = await Employee.findOne({ name: name, surname: surname });
+                        //console.log(csvKey)
+                        if (csvKey === "หัวหน้างาน ") {
+                            lead = employeeMap[data[csvKey]];
                         } else if (csvKey === "โปรเจกต์ที่กำลังทำ") {
                             projectName = data[csvKey];
                         } else if (csvKey === "รหัสพนักงาน") {
@@ -69,6 +75,5 @@ async function csvToDatabase() {
             });
     });
 }
-
 // Export the function
 module.exports = csvToDatabase;

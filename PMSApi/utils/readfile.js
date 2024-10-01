@@ -27,10 +27,11 @@ async function csvToDatabase() {
         fs.createReadStream("./data2.csv", { encoding: 'utf8' }) // Added encoding option
             .pipe(csv())
             .on('data', (data) => {
-                console.log('Raw CSV Data:', data); // Log raw data for debugging
+                //console.log('Raw CSV Data:', data); // Log raw data for debugging
                 const mappedData = {};
                 for (const csvKey in columnMapping) {
                     if (data[csvKey]) {
+                        //console.log(csvKey);
                         if (csvKey === "วันที่เริ่มงาน") { // Assuming this is startDate
                             const [day, month, year] = data[csvKey].split('-');
                             mappedData[columnMapping[csvKey]] = new Date(`${year}-${month}-${day}`);
