@@ -10,4 +10,4 @@ const workloadSchema = new mongoose.Schema({
     
 }, { timestamps: true });
 
-module.exports = mongoose.model('Product', workloadSchema);
+module.exports = mongoose.model('Workload', workloadSchema);
