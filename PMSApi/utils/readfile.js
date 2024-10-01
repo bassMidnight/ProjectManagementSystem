@@ -4,6 +4,11 @@ const Employee = require('../models/employee.model'); // Import your Mongoose mo
 
 async function csvToDatabase() {
     const results = [];
+    const existingIds = new Set();
+
+    // Load existing employee IDs into a Set
+    const existingEmployees = await Employee.find({}, { eId: 1 }); // Fetch only eId
+    existingEmployees.forEach(emp => existingIds.add(emp.eId));
 
     // Define the mapping from CSV columns to Mongoose schema fields
     const columnMapping = {
@@ -19,11 +24,11 @@ async function csvToDatabase() {
     };
 
     return new Promise((resolve, reject) => {
-        fs.createReadStream("../data.csv")
+        fs.createReadStream("./data2.csv", { encoding: 'utf8' }) // Added encoding option
             .pipe(csv())
-            .on('data', async (data) => {
+            .on('data', (data) => {
+                console.log('Raw CSV Data:', data); // Log raw data for debugging
                 const mappedData = {};
-                const projectmappedData = {};
                 for (const csvKey in columnMapping) {
                     if (data[csvKey]) {
                         if (csvKey === "วันที่เริ่มงาน") { // Assuming this is startDate
@@ -37,28 +42,28 @@ async function csvToDatabase() {
                     }
                 }
 
-                // Check if eId already exists in the database
-                const existingEmployee = await Employee.findOne({ eId: mappedData.eId });
-                if (!existingEmployee) {
-                    results.push(mappedData); // Only push if it doesn't exist
-                } else {
-                    //console.log(`Employee with eId ${mappedData.eId} already exists. Skipping...`);
+                // Check for duplicates using the Set
+                if (!existingIds.has(mappedData.eId)) {
+                    results.push(mappedData);
                 }
             })
             .on('end', async () => {
+                // Insert mapped data into MongoDB
                 try {
-                    // Insert mapped data into MongoDB
                     if (results.length > 0) {
                         await Employee.insertMany(results);
+                        console.log('Data inserted successfully'); // Log successful insertion
+                    } else {
+                        console.log('No data to insert'); // Log if results is empty
                     }
                     resolve(results); // Return the inserted data
                 } catch (err) {
-                    console.error(err);
+                    console.error('Insertion Error:', err); // Log insertion errors
                     reject(err); // Reject the promise on error
                 }
             })
-            .on('error', (err) => {
-                console.error(err);
+            .on('error', async (err) => {
+                console.error('Stream Error:', err); // Log stream errors
                 reject(err); // Reject the promise on error
             });
     });
