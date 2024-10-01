@@ -1,4 +1,5 @@
 const employeeModel = require("../models/employee.model");
+const employeeSkillModel = require("../models/EmployeeSkill.model");
 
 async function GetEmployees (req, res, next) {
     try {
@@ -86,11 +87,27 @@ async function DeleteEmployeeById (req, res, next) {
     }
 }
 
+async function GetEmployeeSkills (req, res, next) {
+    try {
+        const employees = await employeeModel.findOne({eId: id});
+        const employeeSkill = await employeeSkillModel.findOne({eId: employees.eId});
+        const skill = await skillModel.find({sId: employeeSkill.sId});
+        res.send({
+            status: 200,
+            message: "success",
+            data: [skill],
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 
 module.exports = {
     GetEmployees,
     GetEmployeeById,
     UpdateEmployeeById,
     CreateEmployee,
-    DeleteEmployeeById
+    DeleteEmployeeById,
+
+    GetEmployeeSkills
 }

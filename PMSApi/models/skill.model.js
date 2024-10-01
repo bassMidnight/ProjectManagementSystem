@@ -6,4 +6,4 @@ const skillSchema = new mongoose.Schema({
     description: String
 }, { timestamps: true });
 
-module.exports = mongoose.model('ProjectMember', skillSchema);
+module.exports = mongoose.model('Skill', skillSchema);
