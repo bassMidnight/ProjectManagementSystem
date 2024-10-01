@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const workloadSchema = new mongoose.Schema({
     eId : String,
     pId : String,
-    workload : {type:Float32Array, defualt:0},
+    workload : Number,
     desc : String,
     date : Date,
     notation : String,
     
 }, { timestamps: true });
 
-module.exports = mongoose.model('Product', workloadSchema);
+module.exports = mongoose.model('Workload', workloadSchema);
