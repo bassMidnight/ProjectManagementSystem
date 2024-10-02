@@ -6,7 +6,7 @@ async function GetAllSkills(req, res) {
         res.send({
             status: 200,
             message: "success",
-            data: [skills],
+            data: skills,
         });
     } catch (error) {
         next(error);
@@ -22,7 +22,7 @@ async function GetSkillById(req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [skill],
+            data: skill,
         });
     } catch (error) {
         next(error);
@@ -31,11 +31,15 @@ async function GetSkillById(req, res, next) {
 
 async function CreateSkill (req, res, next) {
     try {
-        const skill = await skillModel.create(req.body);
+        const skill = await skillModel.create({
+            id: req.body.name.slice(0, 4).toUpperCase(),
+            name: req.body.name,
+            description: req.body.description,
+        });
         res.send({
             status: 200,
             message: "success",
-            data: [skill],
+            data: skill,
         });
     } catch (error) {
         next(error);
@@ -51,7 +55,7 @@ async function UpdateSkillById(req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [skill],
+            data: skill,
         });
     } catch (error) {
         next(error);

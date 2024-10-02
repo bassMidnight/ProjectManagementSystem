@@ -1,5 +1,4 @@
 const employeeModel = require("../models/employee.model");
-const employeeSkillModel = require("../models/EmployeeSkill.model");
 
 async function GetEmployees (req, res, next) {
     try {
@@ -7,7 +6,7 @@ async function GetEmployees (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employees],
+            data: employees,
         });
     } catch (error) {
         next(error);
@@ -27,7 +26,7 @@ async function GetEmployeeById (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
@@ -40,7 +39,7 @@ async function CreateEmployee (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
@@ -60,12 +59,13 @@ async function UpdateEmployeeById (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
     }
 }
+
 
 async function DeleteEmployeeById (req, res, next) {
     try {
@@ -80,34 +80,18 @@ async function DeleteEmployeeById (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
     }
 }
 
-async function GetEmployeeSkills (req, res, next) {
-    try {
-        const employees = await employeeModel.findOne({eId: id});
-        const employeeSkill = await employeeSkillModel.findOne({eId: employees.eId});
-        const skill = await skillModel.find({sId: employeeSkill.sId});
-        res.send({
-            status: 200,
-            message: "success",
-            data: [skill],
-        });
-    } catch (error) {
-        next(error);
-    }
-}
 
 module.exports = {
     GetEmployees,
     GetEmployeeById,
     UpdateEmployeeById,
     CreateEmployee,
-    DeleteEmployeeById,
-
-    GetEmployeeSkills
+    DeleteEmployeeById
 }
