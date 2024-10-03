@@ -2,64 +2,42 @@ const Employee = require('../models/employee.model'); // Import your Mongoose mo
 const Project = require('../models/project.model'); // Import your Mongoose model for projects
 const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
 const employeeModel = require('../models/employee.model');
+const workloadModel = require('../models/workload.model');
 
-const { errServerResponse, successDataResponse } = require('../utils/response');
+const weekNumber = require('../utils/getWeekNumber');
+
+const { errServerResponse, successDataResponse, badRequest } = require('../utils/response');
 async function getProjects(req, res) {
+    
+    const leadId = req.query.leadId || "";
     try {
         console.log("getProjects");
+
+        if (!leadId) {
+            return badRequest('leadId is required');
+        }
         
-        const projects = await Project.find();
-        const projectmember = await ProjectMember.find();
-        const employees = await Employee.find();
-        
+        const currentDate = new Date();
+        const currentWeek = weekNumber.getWeekNumber(currentDate);
+        console.log("currentWeek : ", currentWeek);
+
+        const projects = await Project.find({lead: leadId});
+        const workloads = await workloadModel.find({ pId: { $in: projects.map(projects => projects.id) }});
+
         let result = [];
         for (const project of projects) {
-            
             let data = {
                 id: project.id,
                 projectName: project.projectName,
                 lead: project.lead,
-            }
-            for (const Member of projectmember) {
-                let dataMember = []
-                if (project.id == Member.pId) {
-                    
-                    let memberData = {
-                        id: Member.id,
-                        eId: Member.eId,
-                        pId: Member.pId,
-                    }
-
-                    let dataEmployee = []
-                    let i = 0
-                    for (const employee of employees) {
-                        if (Member.eId == employee.eId) {
-                            console.log(employee.eId);
-                            console.log(employee.name);
-                            console.log(employee.surname);
-                            
-                            let employeeData = {
-                                eId: employee.eId,
-                                name: employee.name,
-                                surname: employee.surname,
-                            }
-                            dataEmployee.push(employeeData)
-                            i++
-                        }
-                    }
-                    console.log("-------------------------------------");
-                    
-                    // console.log("i = " + i);
-                    
-                    memberData.employee = dataEmployee
-                    dataMember.push(memberData)
-
-                }
-                data.projectmember = dataMember
+                progress: project.progress,
+                startDate: project.startDate,
+                completeDate: project.completeDate,
+                workloads: workloads.filter(workload => workload.pId == project.pId)
             }
             result.push(data);
         }
-        
+                
         return successDataResponse(result);
     } catch (error) {
         console.error(error);
