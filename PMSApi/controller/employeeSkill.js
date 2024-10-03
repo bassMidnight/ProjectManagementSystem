@@ -43,8 +43,9 @@ async function GetEmployeeSkills (req, res, next) {
 
 async function AddEmployeeSkill (req, res, next) {
     try {
+        const employee = req.params.eId ;
         const employeeSkill = await EmployeeSkillModel.create({
-            eId: req.params.eId,
+            eId: employee,
             sId: req.query.sId
         });
         res.send({
