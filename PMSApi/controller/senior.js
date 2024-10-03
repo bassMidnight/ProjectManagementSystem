@@ -3,7 +3,7 @@ const Project = require('../models/project.model'); // Import your Mongoose mode
 const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
 const employeeModel = require('../models/employee.model');
 
-const { errServerResponse, successDataResponse } = require('../function/response');
+const { errServerResponse, successDataResponse } = require('../utils/response');
 async function getProjects(req, res) {
     try {
         console.log("getProjects");
