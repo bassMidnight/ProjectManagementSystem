@@ -5,7 +5,7 @@ const workloadSchema = new mongoose.Schema({
     pId : String,
     workload : {type:Number, defualt:0},
     desc : String,
-    date : Date,
+    date : Number,
     notation : String,
     
 }, { timestamps: true });
