@@ -1,5 +1,6 @@
 const EmployeeSkillModel = require('../models/EmployeeSkill.model');
 
+
 async function GetEmployeeSkills (req, res, next) {
     try {
         const employeeSkills = await EmployeeSkillModel.aggregate([
@@ -16,6 +17,17 @@ async function GetEmployeeSkills (req, res, next) {
             },
             {
                 $match: {eId: req.params.id}
+            },
+            {
+                $project: {
+                    _id: 1,
+                    eId: 1,
+                    sId: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    __v: 1,
+                    skills: '$skills.name'
+                }
             }
         ]);
         res.send({
@@ -28,9 +40,13 @@ async function GetEmployeeSkills (req, res, next) {
     }
 }
 
-async function CreateEmployeeSkill (req, res, next) {
+
+async function AddEmployeeSkill (req, res, next) {
     try {
-        const employeeSkill = await EmployeeSkillModel.create(req.body);
+        const employeeSkill = await EmployeeSkillModel.create({
+            eId: req.params.eId,
+            sId: req.query.sId
+        });
         res.send({
             status: 200,
             message: "success",
@@ -41,30 +57,11 @@ async function CreateEmployeeSkill (req, res, next) {
     }
 }
 
-async function UpdateEmployeeSkill(req, res, next) {
+async function RemoveEmployeeSkill(req, res, next) {
     try {
-        const id = req.params.id;
-        const employeeSkill = await EmployeeSkillModel.findOneAndUpdate({ _id: id }, req.body, { new: true });
-        if (!employeeSkill) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee skill not found",
-            });
-        }
-        res.send({
-            status: 200,
-            message: "success",
-            data: employeeSkill,
-        });
-    } catch (error) {
-        next(error);
-    }
-}
-
-async function DeleteEmployeeSkill(req, res, next) {
-    try {
-        const id = req.params.id;
-        const employeeSkill = await EmployeeSkillModel.findOneAndDelete({ _id: id });
+        const eId = req.query.eId ;
+        const sId = req.query.sId ;
+        const employeeSkill = await EmployeeSkillModel.findOneAndDelete({ eId: eId, sId: sId });
         if (!employeeSkill) {
             return res.status(404).send({
                 status: 404,
@@ -83,7 +80,6 @@ async function DeleteEmployeeSkill(req, res, next) {
 
 module.exports = {
     GetEmployeeSkills,
-    CreateEmployeeSkill,
-    UpdateEmployeeSkill,
-    DeleteEmployeeSkill
+    AddEmployeeSkill,
+    RemoveEmployeeSkill
 }
