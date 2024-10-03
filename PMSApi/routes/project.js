@@ -6,6 +6,8 @@ const controller = require('../controller/project.js');
 
 // Adding a route for /api/
 router.get('/', function(req, res, next) {
+    console.log("TEST");
+    
   res.send('Project root endpoint');
 });
 
