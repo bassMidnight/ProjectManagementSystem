@@ -1,22 +1,17 @@
 var express = require('express');
 var router = express.Router();
-const readfile = require('../utils/readfile.js'); // Importing the function
 
 const controller = require('../controller/project.js');
 
 // Adding a route for /api/
-router.get('/', function(req, res, next) {
-  res.send('Project root endpoint');
+router.get('/', async function(req, res) {
+    const response = await controller.getProjects(req, res);
+    res.status(200).json(response);
 });
 
-router.get('/projectByUser', async function(req, res, next) {
-    try {
-        const data = await controller.getProjectByUser();
-        // console.log(data);
-        res.send(data);
-    } catch (error) {
-        next(error); 
-    }
+router.get('/projectByUser', async function(req, res) {
+    const response = await controller.getProjectByUser(req, res);
+    res.status(200).json(response);
 });
 
 
