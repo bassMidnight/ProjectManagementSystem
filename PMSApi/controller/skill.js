@@ -31,10 +31,18 @@ async function GetSkillById(req, res, next) {
 
 async function CreateSkill (req, res, next) {
     try {
+        const id = req.body.name.slice(0, 4).toUpperCase()+"001";
+        if (!id) {
+            return next(new Error('Skill id is required'));
+        }
+        const name = req.body.name;
+        if (!name) {
+            return next(new Error('Skill name is required'));
+        }
         const skill = await skillModel.create({
-            id: req.body.name.slice(0, 4).toUpperCase(),
-            name: req.body.name,
-            description: req.body.description,
+            id: id,
+            name: name,
+            description: req.body.description || "",
         });
         res.send({
             status: 200,
