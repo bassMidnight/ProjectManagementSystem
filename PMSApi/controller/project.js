@@ -1,86 +1,83 @@
-const fs = require('node:fs');
-const csv = require('csv-parser');
 const Employee = require('../models/employee.model'); // Import your Mongoose model
+const Project = require('../models/project.model'); // Import your Mongoose model for projects
+const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
 
-async function csvToDatabase() {
-    const results = [];
-    const existingIds = new Set();
+async function getProjects(req, res) {
+    try {
+        const projects = await Project.find();
+        const projectmember = await ProjectMember.find();
+        const employees = await Employee.find();
+        
+        let result = [];
+        for (const project of projects) {
+            
+            let data = {
+                id: project.id,
+                projectName: project.projectName,
+                lead: project.lead,
+            }
+            for (const Member of projectmember) {
+                let dataMember = []
+                if (project.id == Member.pId) {
+                    // console.log("project.id : ", project.id);
+                    console.log("Member.pId : ", Member._id);
+                    console.log("Member.eId : ", Member.eId);
+                    console.log("Member.pId : ", Member.pId);
+                    
+                    dataMember.push({
+                        id: Member.id,
+                        eId: Member.eId,
+                        pId: Member.pId,
+                    })
 
-    // Load existing employee IDs into a Set
-    const existingEmployees = await Employee.find({}, { eId: 1 }); // Fetch only eId
-    existingEmployees.forEach(emp => existingIds.add(emp.eId));
-
-    // Define the mapping from CSV columns to Mongoose schema fields
-    const columnMapping = {
-        "รหัสพนักงาน": "eId",
-        "ชื่อ": "name",
-        "นามสกุล": "surname",
-        "ชื่อเล่น": "shortname",
-        "ศูนย์": "branch",
-        "ตำแหน่งงาน": "position",
-        "ทีม": "department",
-        "วันที่เริ่มงาน": "startDate",
-        "Outsource": "onBoard",
-    };
-
-    return new Promise((resolve, reject) => {
-        fs.createReadStream("./data2.csv", { encoding: 'utf8' }) // Added encoding option
-            .pipe(csv())
-            .on('data', (data) => {
-                console.log('Raw CSV Data:', data); // Log raw data for debugging
-                const mappedData = {};
-                for (const csvKey in columnMapping) {
-                    if (data[csvKey]) {
-                        if (csvKey === "วันที่เริ่มงาน") { // Assuming this is startDate
-                            const [day, month, year] = data[csvKey].split('-');
-                            mappedData[columnMapping[csvKey]] = new Date(`${year}-${month}-${day}`);
-                        } else if (csvKey === "Outsource") { // Assuming this is onBoard
-                            mappedData[columnMapping[csvKey]] = data[csvKey] === "รับงานแล้ว" ? true : false;
-                        } else {
-                            mappedData[columnMapping[csvKey]] = data[csvKey];
+                    for (const employee of employees) {
+                        if (Member.eId == employee.eId) {
+                            dataMember.push({
+                                name: employee.name,
+                                surname: employee.surname,
+                            })
                         }
                     }
                 }
+                data.projectmember = dataMember
+            }
+            result.push(data);
+        }
+        
+        return {
+            error: false,
+            message: `success`,
+            result: result
+        };
+    } catch (error) {
+        console.error(error);
 
-                // Check for duplicates using the Set
-                if (!existingIds.has(mappedData.eId)) {
-                    results.push(mappedData);
-                }
-            })
-            .on('end', async () => {
-                // Insert mapped data into MongoDB
-                try {
-                    if (results.length > 0) {
-                        await Employee.insertMany(results);
-                        console.log('Data inserted successfully'); // Log successful insertion
-                    } else {
-                        console.log('No data to insert'); // Log if results is empty
-                    }
-                    resolve(results); // Return the inserted data
-                } catch (err) {
-                    console.error('Insertion Error:', err); // Log insertion errors
-                    reject(err); // Reject the promise on error
-                }
-            })
-            .on('error', async (err) => {
-                console.error('Stream Error:', err); // Log stream errors
-                reject(err); // Reject the promise on error
-            });
-    });
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error"
+        });
+    }
 }
 
-async function getProjectByUser() {
+async function getProjectByUser(req, res) {
+    const userId = req.query.userId;
+
     try {
-        const data = await Employee.find()
-        
-        return res.status(200).send({
+        const userProjects = await Employee.find({ eId: userId });
+
+        return {
             error: false,
-            result: data
-        });
+            result: userProjects
+        };
     } catch (error) {
-        console.log(error);
+        console.error(error);
+
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error"
+        });
     }
 }
 
 // Export the function
-module.exports = {getProjectByUser, csvToDatabase};
+module.exports = {getProjectByUser, getProjects};
