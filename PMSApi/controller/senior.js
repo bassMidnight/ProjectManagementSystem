@@ -19,11 +19,26 @@ async function getProjects(req, res) {
         
         const currentDate = new Date();
         const currentWeek = weekNumber.getWeekNumber(currentDate);
-        console.log("currentWeek : ", currentWeek);
+        // console.log("currentWeek : ", currentWeek);
 
         const projects = await Project.find({lead: leadId});
-        const workloads = await workloadModel.find({ pId: { $in: projects.map(projects => projects.id) }});
-
+        const aggregatedWorkloads = await workloadModel.aggregate([
+            {
+                $match: {
+                pId: { $in: projects.map(project => project.id) },
+                numOfyear: { $eq: currentWeek }
+                }
+            },
+            {
+                $group: {
+                _id: "$pId", // กลุ่มข้อมูลตาม pId
+                avgWorkload: { $avg: "$workload" } // คำนวณค่าเฉลี่ยของ workload
+                }
+            }
+        ]);
+          
+        // console.log(aggregatedWorkloads);
+        
         let result = [];
         for (const project of projects) {
             let data = {
@@ -33,12 +48,18 @@ async function getProjects(req, res) {
                 progress: project.progress,
                 startDate: project.startDate,
                 completeDate: project.completeDate,
-                workloads: workloads.filter(workload => workload.pId == project.pId)
+            }
+
+            // let dataWorkload = []
+            for (const workload of aggregatedWorkloads) {
+                if (project.id == workload.pId) {
+                    data.workload = workload.avgWorkload;
+                }
             }
             result.push(data);
         }
                 
-        return successDataResponse(result);
+        return successDataResponse(aggregatedWorkloads);
     } catch (error) {
         console.error(error);
 
