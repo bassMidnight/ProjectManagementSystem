@@ -7,10 +7,11 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var apiRouter = require('./routes/api.js');
-var projectRouter = require('./models/project.model');
+var projectRouter = require('./routes/project');
 var employeeRouter = require('./routes/employee');
 var workloadRouter = require('./routes/workload');
 var skillRouter = require('./routes/skill');
+var seniorRouter = require('./routes/senior');
 
 var app = express();
 var cors = require('cors');
@@ -34,6 +35,7 @@ app.use('/project', projectRouter);
 app.use('/employee', employeeRouter);
 app.use('/workload', workloadRouter);
 app.use('/skill', skillRouter);
+app.use('/senior', seniorRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
