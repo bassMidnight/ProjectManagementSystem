@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-const controller = require('../controller/project.js');
+const controller = require('../controller/senior.js');
 
 // Adding a route for /api/
 router.get('/', async function(req, res) {
