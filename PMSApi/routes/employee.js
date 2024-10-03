@@ -11,8 +11,8 @@ router.put('/:id', employeeController.UpdateEmployeeById);
 router.delete('/:id', employeeController.DeleteEmployeeById);
 
 //EmployeeSkill
-router.get('/:id/skills', employeeSkillController.GetEmployeeSkills);
+router.get('/:eId/skills', employeeSkillController.GetEmployeeSkills);
 router.post('/:eId/skills', employeeSkillController.AddEmployeeSkill);
-router.delete('/:eid/skills', employeeSkillController.RemoveEmployeeSkill);
+router.delete('/:eId/skills', employeeSkillController.RemoveEmployeeSkill);
 
 module.exports = router;

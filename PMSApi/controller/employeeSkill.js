@@ -3,6 +3,13 @@ const EmployeeSkillModel = require('../models/EmployeeSkill.model');
 
 async function GetEmployeeSkills (req, res, next) {
     try {
+        const eId = req.params.eId || req.query.id ;
+        if (!eId) {
+            return res.status(400).send({
+                status: 400,
+                message: "employee id is required",
+            });
+        }
         const employeeSkills = await EmployeeSkillModel.aggregate([
             {
                 $lookup: {
@@ -16,7 +23,7 @@ async function GetEmployeeSkills (req, res, next) {
                 $unwind: '$skills'
             },
             {
-                $match: {eId: req.params.id}
+                $match: {eId: eId}
             },
             {
                 $project: {
@@ -44,6 +51,12 @@ async function GetEmployeeSkills (req, res, next) {
 async function AddEmployeeSkill (req, res, next) {
     try {
         const employee = req.params.eId ;
+        if (!employee) {
+            return res.status(400).send({
+                status: 400,
+                message: "employee id is required",
+            });
+        }
         const employeeSkill = await EmployeeSkillModel.create({
             eId: employee,
             sId: req.query.sId
@@ -60,8 +73,20 @@ async function AddEmployeeSkill (req, res, next) {
 
 async function RemoveEmployeeSkill(req, res, next) {
     try {
-        const eId = req.query.eId ;
+        const eId = req.query.eId || req.params.eId ;
+        if (!eId) {
+            return res.status(400).send({
+                status: 400,
+                message: "employee id is required",
+            });
+        }
         const sId = req.query.sId ;
+        if (!sId) {
+            return res.status(400).send({
+                status: 400,
+                message: "skill id is required",
+            });
+        }
         const employeeSkill = await EmployeeSkillModel.findOneAndDelete({ eId: eId, sId: sId });
         if (!employeeSkill) {
             return res.status(404).send({
