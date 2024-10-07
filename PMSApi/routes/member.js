@@ -21,6 +21,10 @@ router.get('/allprojectsbydate', async function(req, res){
     await controller.GetAllProjectsAndWorkloadByDate(req, res);
 });
 
+router.get('/memberworkloadoverview', async function(req, res){
+    await controller.GetMemberWorkloadOverview(req, res);
+});
+
 //--------------------------------------------------------------------------------//
 
 router.get('/currentworkload/:eid', async function(req, res){
