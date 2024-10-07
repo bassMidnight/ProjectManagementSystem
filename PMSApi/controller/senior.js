@@ -537,7 +537,7 @@ async function getAllEmployee(req, res) {
             },
             {
                 $project: {
-                    _id : 1,
+                    eId : 1,
                     name : 1,
                     surname : 1,
                 }
