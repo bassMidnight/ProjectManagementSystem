@@ -250,31 +250,66 @@ async function MemberWorkloadOverview(eId, weeks, year) {
     return workloads;
 }
 
-async function MemberWorkloadOverviewMonthly(eId, month) {
+async function MemberWorkloadOverviewMonthly(eId, months, year) {   
     const workloads = await Workload.aggregate([
         {
             $match: {
                 eId: eId,
-                weekOfYear: { $in: weeks }
+                $expr: { 
+                    $and: [
+                        { $in: [{ $month: "$createdAt" }, months] },
+                        { $eq: [{ $year: "$createdAt" }, year] }
+                    ]
+                }
+            }
+        },
+        {
+            $project: {
+                pId: 1,
+                month: { $month: "$createdAt" },
+                year: { $year: "$createdAt" },
+                workload: 1
             }
         },
         {
             $group: {
-                _id: "$weekOfYear",
-                workload: { $sum: "$workload" }
+                _id: { pId: "$pId", month: "$month" },
+                year: { $first: "$year" },
+                avgWorkload: { $avg: "$workload" }
+            }
+        },
+        {
+            $group: {
+                _id: "$_id.month",
+                year: { $first: "$year" },
+                totalWorkload: { $sum: "$avgWorkload" }
             }
         },
         {
             $project: {
                 _id: 0,
-                weekOfYear: "$_id",
-                workload: 1
+                month: "$_id",
+                year: 1,
+                workload: "$totalWorkload"
             }
+        },
+        {
+            $sort: { month: 1 }
         }
     ]);
     return workloads;
 }
 
+async function MemberWorkloadOverviewTwelveMonths(eId, year) {
+    const workloads = await Workload.aggregate([
+        {
+            $match: {
+                eId: eId,
+                $expr: { $eq: [{ $year: "$createdAt" }, year] }
+            }
+        }
+    ]);
+}
 
 //------------------------------------------------------------------------------//
 async function weeklyQueryByEId(eId, weekOfYear, year) {
@@ -465,5 +500,7 @@ module.exports = {
     weeklyMemberQueryByWeek,
     weeklyMemberProjectQueryByWeek,
     weeklyMemberProjectQueryByWeeks,
-    MemberWorkloadOverview
+    MemberWorkloadOverview,
+    MemberWorkloadOverviewMonthly,
+    MemberWorkloadOverviewTwelveMonths
 }

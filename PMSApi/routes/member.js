@@ -25,6 +25,11 @@ router.get('/memberworkloadoverview', async function(req, res){
     await controller.GetMemberWorkloadOverview(req, res);
 });
 
+router.get('/memberworkloadoverviewmonthly', async function(req, res){
+    await controller.GetMemberWorkloadOverviewMonthly(req, res);
+});
+
+
 //--------------------------------------------------------------------------------//
 
 router.get('/currentworkload/:eid', async function(req, res){
