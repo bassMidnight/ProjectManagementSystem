@@ -12,7 +12,7 @@ var employeeRouter = require('./routes/employee');
 var workloadRouter = require('./routes/workload');
 var skillRouter = require('./routes/skill');
 var seniorRouter = require('./routes/senior');
-
+var memberRouter = require('./routes/member');
 var app = express();
 var cors = require('cors');
 app.use(cors());
@@ -36,6 +36,7 @@ app.use('/employee', employeeRouter);
 app.use('/workload', workloadRouter);
 app.use('/skill', skillRouter);
 app.use('/senior', seniorRouter);
+app.use('/member', memberRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

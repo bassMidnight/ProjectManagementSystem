@@ -115,7 +115,7 @@ async function weeklyMemberProjectQueryByWeek(eId, weekOfYear) {
         },
         {
             $addFields: {
-                totalWorkload: { $sum: "$workload.workload" }
+                totalWorkload: { $avg: "$workload.workload" }
             }
         },
         {
