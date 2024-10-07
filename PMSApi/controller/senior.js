@@ -92,6 +92,8 @@ async function getGraph(req, res) {
         if (graphMode === "month") {
             const currentDate = new Date();
             const currentWeek = weekNumber.getWeekNumber(currentDate);
+            // console.log("currentWeek : ", currentWeek); 
+            
             const currentYear = currentDate.getFullYear();
             let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
             workloads = await workloadModel.aggregate([
@@ -353,7 +355,7 @@ async function getProjectDropdown(req, res) {
             result.push(data)
         }
 
-        return successDataResponse(workloads);
+        return successDataResponse(result);
     } catch (error) {
         console.error(error);
         return errServerResponse("Internal Server Error");
