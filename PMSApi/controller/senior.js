@@ -1,8 +1,7 @@
-const Employee = require('../models/employee.model'); // Import your Mongoose model
-const Project = require('../models/project.model'); // Import your Mongoose model for projects
-const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
-const employeeModel = require('../models/employee.model');
-const workloadModel = require('../models/workload.model');
+const ProjectModel = require('../models/project.model');
+const ProjectMemberModel = require('../models/projectMember.model');
+const EmployeeModel = require('../models/employee.model');
+const WorkloadModel = require('../models/workload.model');
 
 const formarDate = require('../utils/formatDate');
 const weekNumber = require('../utils/getWeekNumber');
@@ -28,10 +27,10 @@ async function getProjects(req, res) {
         let currentWeek = weekNumber.getWeekNumber(currentDate);
         // console.log("currentWeek : ", currentWeek);
 
-        const projects = await Project.find({lead: leadId});
+        const projects = await ProjectModel.find({lead: leadId});
         // console.log("projects : ", projects);
         
-        let aggregatedWorkloads = await workloadModel.aggregate([
+        let aggregatedWorkloads = await WorkloadModel.aggregate([
             {
                 $match: {
                     pId: { $in: projects.map(project => project.id) },
@@ -53,12 +52,14 @@ async function getProjects(req, res) {
             let data = {
                 id: project.id,
                 projectName: project.projectName,
-                workload: "0"
+                workload: "0.00"
             }
             
             for (const workload of aggregatedWorkloads) {
                 if (project.id == workload._id) {
-                    data.workload = workload.avgWorkload.toFixed(2)
+                    workload_data = workload.avgWorkload || "0.00"
+                    workload_data = workload_data.toFixed(2)
+                    data.workload  = workload_data
                 }
             }
             result.push(data);
@@ -96,7 +97,7 @@ async function getGraph(req, res) {
             
             const currentYear = currentDate.getFullYear();
             let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
-            workloads = await workloadModel.aggregate([
+            workloads = await WorkloadModel.aggregate([
                 {
                     $match: { 
                         pId: projectId , // กรองข้อมูลตาม pId ที่ต้องการ
@@ -118,7 +119,7 @@ async function getGraph(req, res) {
             const twelveMonthsAgo = new Date();
             twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12); // 12 เดือนย้อนหลัง
 
-            workloads = await workloadModel.aggregate([
+            workloads = await WorkloadModel.aggregate([
                 {
                     $match: {
                     pId: projectId, // กรองข้อมูลตาม pId ที่ต้องการ
@@ -163,11 +164,11 @@ async function getProjectMenberList(req, res) {
         const currentDate = new Date();
         const currentWeek = weekNumber.getWeekNumber(currentDate);
         
-        const members = await ProjectMember.find({ pId: projectId });
-        const employees = await employeeModel.find({ eId: { $in: members.map(member => member.eId) } });
+        const members = await ProjectMemberModel.find({ pId: projectId });
+        const employees = await EmployeeModel.find({ eId: { $in: members.map(member => member.eId) } });
         // console.log("employees : ", employees.map(employee => employee.eId));
         
-        const workloads = await workloadModel.find({ 
+        const workloads = await WorkloadModel.find({ 
             weekOfYear: currentWeek,
             eId: { $in: employees.map(employee => employee.eId) } // กรอง workload.eId ที่ตรงกับ employees.eId
         });
@@ -227,7 +228,7 @@ async function getWorkLoad(req, res) {
 
         const currentDate = new Date();
         const currentWeek = weekNumber.getWeekNumber(currentDate);
-        const workloads = await workloadModel.find(
+        const workloads = await WorkloadModel.find(
             { 
                 eId: eId,
                 pId: pId,
@@ -265,7 +266,7 @@ async function updateWorkLoad(req, res) {
         const currentDate = new Date()
         const currentWeek = weekNumber.getWeekNumber(currentDate);
 
-        const insertOrUpdate = await workloadModel.updateOne(
+        const insertOrUpdate = await WorkloadModel.updateOne(
             { 
                 pId: pId,
                 eId: eId,
@@ -301,19 +302,19 @@ async function getEmpDropdown(req, res) {
             return badRequest("lead id requried.")
         }
 
-        const projects = await Project.find({
+        const projects = await ProjectModel.find({
             lead: leadId
         })
         // console.log("projects : ", projects);
         
 
-        const members = await ProjectMember.find(
+        const members = await ProjectMemberModel.find(
             { pId : {$in : projects.map(project => project.id)} }
         )
         // console.log("members : ", members);
         
 
-        const employees = await employeeModel.find(
+        const employees = await EmployeeModel.find(
             { eId : { $in : members.map(member => member.eId)}}
         )
         // console.log("employees : ", employees);
@@ -342,7 +343,7 @@ async function getProjectDropdown(req, res) {
         if (!leadId) {
             return badRequest('lead id requried.')
         }
-        const projects = await Project.find({
+        const projects = await ProjectModel.find({
             lead: leadId
         })
 
@@ -365,12 +366,16 @@ async function getProjectDropdown(req, res) {
 async function getWorkLoadHistory(req, res) {
     const { leadId, projectId, employeeId } = req.query;
 
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+    let offset = (page - 1) * size;
+
     try {
         if (!leadId) {
             return badRequest('leadId is required.');
         }
 
-        const projects = await Project.find({ lead: leadId });
+        const projects = await ProjectModel.find({ lead: leadId });
         const workloadQuery = { pId: { $in: projects.map(project => project.id) } };
         if (projectId) {
             workloadQuery.id = projectId;
@@ -379,9 +384,10 @@ async function getWorkLoadHistory(req, res) {
             workloadQuery.eId = employeeId;
         }
 
-        const workloads = await workloadModel.find(workloadQuery).sort({ createdAt: -1 });
+        const workloads = await WorkloadModel.find(workloadQuery).skip(offset).limit(size).sort({ createdAt: -1 });
+        const workloadtotal = await WorkloadModel.countDocuments(workloadQuery);
 
-        const employees = await employeeModel.find({ eId: { $in: workloads.map(workload => workload.eId) } });
+        const employees = await EmployeeModel.find({ eId: { $in: workloads.map(workload => workload.eId) } });
         // console.log(employees);
         
         const result = workloads.map(workload => ({
@@ -399,8 +405,14 @@ async function getWorkLoadHistory(req, res) {
                 : '',
         }));
 
-        return successDataResponse(result);
+        return successDataResponse({
+            result : result,
+            total : result.length,
+            totalAll : workloadtotal
+        });
     } catch (error) {
+        console.log(error);
+        
         return errServerResponse("Internal Server Error");
     }
 }
@@ -413,7 +425,7 @@ async function getworkloadHistoryDetail(req, res) {
             return badRequest('workload id is required.');
         }
         
-        const workload = await workloadModel.findOne({
+        const workload = await WorkloadModel.findOne({
             _id: workloadId
         })
 
@@ -423,15 +435,138 @@ async function getworkloadHistoryDetail(req, res) {
     }
 }
 
+async function addEmployeeToProject(req, res) {
+    const employeeId = req.query.eId;
+    const projectId = req.query.pId;
+
+    if (!employeeId) {
+        return badRequest('Employee ID is required.');
+    }
+
+    if (!projectId) {
+        return badRequest('Project ID is required.');
+    }
+
+    try {
+        const employee = await EmployeeModel.findOne({ eId: employeeId });
+        if (!employee) {
+            return errServerResponse('Employee not found.');
+        }
+
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            return errServerResponse('Project not found.');
+        }
+
+        const newEmployeeProject = await ProjectMemberModel.create({
+            eId: employeeId,
+            pId: projectId
+        });
+
+        if (!newEmployeeProject) {
+            return errServerResponse('Failed to add employee to project.');
+        }
+
+        return successDataResponse({
+            message: 'Employee added to project successfully.'
+        });
+    } catch (error) {
+        console.log(error);
+        
+        return errServerResponse('Internal Server Error');
+    }
+}
+
+async function deleteEmployeeFromProject(req, res) {
+    const employeeId = req.query.eId;
+    const projectId = req.query.pId;
+
+    if (!employeeId) {
+        return badRequest('Employee ID is required.');
+    }
+
+    if (!projectId) {
+        return badRequest('Project ID is required.');
+    }
+
+    try {
+        const employee = await EmployeeModel.findOne({ eId: employeeId });
+        if (!employee) {
+            return errServerResponse('Employee not found.');
+        }
+
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            return errServerResponse('Project not found.');
+        }
+
+        const deleteResult = await ProjectMemberModel.findOneAndDelete({
+            eId : employeeId,
+            pId : projectId
+        });
+
+        if (!deleteResult) {
+            return errServerResponse('Failed to delete employee from project.');
+        }
+
+        return successDataResponse({
+            message: 'Employee deleted from project successfully.'
+        });
+    } catch (error) {
+        return errServerResponse('Internal Server Error');
+    }
+}
+
+async function getAllEmployee(req, res) {
+    const employeeName = req.query.employeeName;
+
+    try {
+        const employees = await EmployeeModel.aggregate([
+            {
+                $addFields: {
+                    fullName: { $concat: ["$name", " ", "$surname"] } // รวม name กับ surname เข้าด้วยกัน
+                }
+            },
+            {
+                $match: {
+                    fullName: { 
+                        $regex: employeeName ? employeeName : '', // ค้นหาตาม employeeName
+                        $options: 'i' // ไม่สนใจตัวพิมพ์เล็ก-ใหญ่
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id : 1,
+                    name : 1,
+                    surname : 1,
+                }
+            }
+        ]);
+
+        let result = employees.map(employee => ({
+            eId : employee.eId,
+            fullName : `${employee.name} ${employee.surname}`,
+        }));
+        
+        return successDataResponse(result);
+    } catch (error) {
+        return errServerResponse('Internal Server Error');
+    }
+}
+
 // Export the function
 module.exports = {
-    getProjects, 
-    getGraph, 
+    getProjects,
+    getGraph,
     getProjectMenberList,
     getWorkLoad,
     updateWorkLoad,
     getEmpDropdown,
     getProjectDropdown,
     getWorkLoadHistory,
-    getworkloadHistoryDetail
+    getworkloadHistoryDetail,
+    addEmployeeToProject,
+    deleteEmployeeFromProject,
+    getAllEmployee
 };

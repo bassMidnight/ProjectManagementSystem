@@ -51,4 +51,21 @@ router.get('/workloadHistoryDetail', async function (req, res) {
     res.status(200).json(response);
 })
 
+// เพิ่ม - ลบ สมาชิกจากโปรเจค
+
+router.get('/allEmployee', async function (req, res) {
+    const response = await controller.getAllEmployee(req, res);
+    res.status(200).json(response);
+})
+
+router.post('/employeeProject', async function (req, res) {
+    const response = await controller.addEmployeeToProject(req, res);
+    res.status(200).json(response);
+})
+
+router.delete('/employeeProject', async function (req, res) {
+    const response = await controller.deleteEmployeeFromProject(req, res);
+    res.status(200).json(response);
+})
+
 module.exports = router;
