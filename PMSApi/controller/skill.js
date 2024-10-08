@@ -56,7 +56,7 @@ async function CreateSkill (req, res, next) {
 
 async function UpdateSkillById(req, res, next) {
     try {
-        const skill = await skillModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const skill = await skillModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
         if (!skill) {
             return next(new Error('Skill not found'));
         }
@@ -72,7 +72,7 @@ async function UpdateSkillById(req, res, next) {
 
 async function DeleteSkillById(req, res, next) {
     try {
-        const skill = await skillModel.findByIdAndDelete(req.params.id);
+        const skill = await skillModel.findOneAndDelete({ id: req.params.id });
         if (!skill) {
             return next(new Error('Skill not found'));
         }
@@ -84,6 +84,7 @@ async function DeleteSkillById(req, res, next) {
         next(error);
     }
 }
+
 
 module.exports = {
     GetAllSkills,
