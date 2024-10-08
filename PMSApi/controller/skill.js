@@ -1,4 +1,5 @@
 const skillModel = require('../models/skill.model');
+const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetAllSkills(req, res) {
     try {
@@ -14,10 +15,14 @@ async function GetAllSkills(req, res) {
 }
 
 async function GetSkillById(req, res, next) {
+    const id = req.query.skillID;
+    if (!id) {
+        return badRequest('Skill id is required');
+    }
     try {
-        const skill = await skillModel.find({id: req.params.id});
+        const skill = await skillModel.find({id: id});
         if (!skill) {
-            return next(new Error('Skill not found'));
+            return dataNotFound('Skill not found');
         }
         res.send({
             status: 200,
@@ -30,11 +35,11 @@ async function GetSkillById(req, res, next) {
 }
 
 async function CreateSkill (req, res, next) {
+    const name = req.body.name;
+    if (!name) {
+        return badRequest('Skill name is required');
+    }
     try {
-        const name = req.body.name;
-        if (!name) {
-            return next(new Error('Skill name is required'));
-        }
         const id = req.body.name.slice(0, 4).toUpperCase()+"001";
         const skill = await skillModel.create({
             id: id,
@@ -52,10 +57,14 @@ async function CreateSkill (req, res, next) {
 }
 
 async function UpdateSkillById(req, res, next) {
+    const id = req.query.skillID;
+    if (!id) {
+        return badRequest('Skill id is required');
+    }
     try {
-        const skill = await skillModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        const skill = await skillModel.findOneAndUpdate({ id: id }, req.body, { new: true });
         if (!skill) {
-            return next(new Error('Skill not found'));
+            return badRequest('Skill id was required');
         }
         res.send({
             status: 200,
@@ -68,10 +77,14 @@ async function UpdateSkillById(req, res, next) {
 }
 
 async function DeleteSkillById(req, res, next) {
+    const id = req.query.skillID;
+    if (!id) {
+        return badRequest('Skill id is required');
+    }
     try {
-        const skill = await skillModel.findOneAndDelete({ id: req.params.id });
+        const skill = await skillModel.findOneAndDelete({ id: id});
         if (!skill) {
-            return next(new Error('Skill not found'));
+            return badRequest('Skill id was required');
         }
         res.send({
             status: 200,
