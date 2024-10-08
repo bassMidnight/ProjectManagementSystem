@@ -1,15 +1,17 @@
-const Employee = require('../models/employee.model'); // Import your Mongoose model
-const Project = require('../models/project.model'); // Import your Mongoose model for projects
-const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
-const employeeModel = require('../models/employee.model');
-const workloadModel = require('../models/workload.model');
+const ProjectModel = require('../models/project.model');
+const ProjectMemberModel = require('../models/projectMember.model');
+const EmployeeModel = require('../models/employee.model');
+const WorkloadModel = require('../models/workload.model');
 
+const formarDate = require('../utils/formatDate');
 const weekNumber = require('../utils/getWeekNumber');
 
 const { errServerResponse, successDataResponse, badRequest } = require('../utils/response');
+
 async function getProjects(req, res) {
     
     const leadId = req.query.leadId || "";
+    let date = req.query.date;
     try {
         console.log("getProjects");
 
@@ -17,27 +19,188 @@ async function getProjects(req, res) {
             return badRequest('leadId is required');
         }
         
-        const currentDate = new Date();
-        const currentWeek = weekNumber.getWeekNumber(currentDate);
-        console.log("currentWeek : ", currentWeek);
+        const currentDate = new Date(date);
+        const currentYear = currentDate.getFullYear();
+        let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
+        // console.log(startOfYear, endOfYear);
 
-        const projects = await Project.find({lead: leadId});
-        const workloads = await workloadModel.find({ pId: { $in: projects.map(projects => projects.id) }});
+        let currentWeek = weekNumber.getWeekNumber(currentDate);
+        // console.log("currentWeek : ", currentWeek);
 
+        const projects = await ProjectModel.find({lead: leadId});
+        // console.log("projects : ", projects);
+        
+        let aggregatedWorkloads = await WorkloadModel.aggregate([
+            {
+                $match: {
+                    pId: { $in: projects.map(project => project.id) },
+                    weekOfYear: { $eq: currentWeek },
+                    createdAt: { $gte: startOfYear, $lt: endOfYear }
+                }
+            },
+            {
+                $group: {
+                    _id: "$pId", // กลุ่มข้อมูลตาม pId
+                    avgWorkload: { $avg: "$workload" } // คำนวณค่าเฉลี่ยของ workload
+                }
+            }
+        ]);
+        
+                  
         let result = [];
         for (const project of projects) {
             let data = {
                 id: project.id,
                 projectName: project.projectName,
-                lead: project.lead,
-                progress: project.progress,
-                startDate: project.startDate,
-                completeDate: project.completeDate,
-                workloads: workloads.filter(workload => workload.pId == project.pId)
+                workload: "0.00"
+            }
+            
+            for (const workload of aggregatedWorkloads) {
+                if (project.id == workload._id) {
+                    workload_data = workload.avgWorkload || "0.00"
+                    workload_data = workload_data.toFixed(2)
+                    data.workload  = workload_data
+                }
             }
             result.push(data);
         }
                 
+        return successDataResponse({
+            result: result, 
+        });
+    } catch (error) {
+        console.error(error);
+
+        // return res.status(500).json({
+        //     error: true,
+        //     message: "Internal Server Error"
+        // });
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getGraph(req, res) {
+    const projectId = req.query.pId || "";
+    const graphMode = req.query.graphMode || "month";
+
+    try {
+        if (!projectId) {
+            return badRequest('project id is required');
+        }
+        
+        let workloads;
+
+        if (graphMode === "month") {
+            const currentDate = new Date();
+            const currentWeek = weekNumber.getWeekNumber(currentDate);
+            // console.log("currentWeek : ", currentWeek); 
+            
+            const currentYear = currentDate.getFullYear();
+            let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
+            workloads = await WorkloadModel.aggregate([
+                {
+                    $match: { 
+                        pId: projectId , // กรองข้อมูลตาม pId ที่ต้องการ
+                        weekOfYear: { $gte: currentWeek - 11 , $lte: currentWeek }, // กรองข้อมูลตาม 12 สัปดาห์ ย้อนหลัง
+                        createdAt: { $gte: startOfYear, $lt: endOfYear }
+                    } 
+                },
+                {
+                    $group: {
+                    _id: "$weekOfYear", // แบ่งข้อมูลตาม weekOfYear
+                    avgWorkload: { $avg: "$workload" } // คำนวณค่าเฉลี่ยของ workload ในแต่ละ weekOfYear
+                    }
+                },
+                {
+                    $sort: { _id: 1 } // เรียงลำดับตาม weekOfYear จากมากไปน้อย
+                }
+            ]);
+        } else if (graphMode === "year") {
+            const twelveMonthsAgo = new Date();
+            twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12); // 12 เดือนย้อนหลัง
+
+            workloads = await WorkloadModel.aggregate([
+                {
+                    $match: {
+                    pId: projectId, // กรองข้อมูลตาม pId ที่ต้องการ
+                    datetime: { $gte: twelveMonthsAgo, $lte: new Date() } // กรองข้อมูล 12 เดือนย้อนหลังจากวันนี้
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                          year: { $year: "$datetime" },
+                          month: { $month: "$datetime" }
+                        },
+                        avgWorkload: { $avg: "$workload" }
+                    }
+                },
+                {
+                    $sort: { _id: 1 } // เรียงลำดับเดือนจากน้อยไปมาก (เก่าสุดไปใหม่สุด)
+                }
+            ]);
+        }
+
+        return successDataResponse(workloads);
+    } catch (error) {
+        console.error(error);
+
+        // return res.status(500).json({
+        //     error: true,
+        //     message: "Internal Server Error"
+        // });
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getProjectMenberList(req, res) {
+    const projectId = req.query.pId || "";
+
+    try {
+        if (!projectId) {
+            return badRequest('project id is required');
+        }
+
+        const currentDate = new Date();
+        const currentWeek = weekNumber.getWeekNumber(currentDate);
+        
+        const members = await ProjectMemberModel.find({ pId: projectId });
+        const employees = await EmployeeModel.find({ eId: { $in: members.map(member => member.eId) } });
+        // console.log("employees : ", employees.map(employee => employee.eId));
+        
+        const workloads = await WorkloadModel.find({ 
+            weekOfYear: currentWeek,
+            eId: { $in: employees.map(employee => employee.eId) } // กรอง workload.eId ที่ตรงกับ employees.eId
+        });
+
+        // console.log("workloads : ", workloads);
+        
+        let result = [];
+        for (const employee of employees) {
+            let data = {
+                id: employee.eId,
+                name: employee.name,
+                surname: employee.surname,
+                position: employee.position,
+                department: employee.department,
+                workload: 0,
+            }
+            // for (const workload of workloads) {
+            //     if(workload.eId == employee.eId) {
+            //         data.workload = workload.workload;
+            //     }
+            // }
+            for (let i = workloads.length - 1; i >= 0; i--) { // วนลูปย้อนกลับ
+                if (workloads[i].eId == employee.eId) {
+                    data.workload = workloads[i].workload;
+                    workloads.splice(i, 1); // ลบค่าในตำแหน่งปัจจุบันออกจาก array
+                }
+            }
+            
+
+            result.push(data);
+        }
+
         return successDataResponse(result);
     } catch (error) {
         console.error(error);
@@ -48,24 +211,33 @@ async function getProjects(req, res) {
         // });
         return errServerResponse("Internal Server Error");
     }
-}
 
-async function getProjectByUser(req, res) {
-    const userId = req.query.userId || "";
+}
+async function getWorkLoad(req, res) {
+    const eId = req.query.eId || "";
+    const pId = req.query.pId || "";
 
     try {
-        if (!userId) {
-            return res.status(400).json({
-                error: true,
-                message: "userId is required"
-            });
+        if (!eId) {
+            return badRequest('employee id is required');
         }
 
-        // const userProjects = await Employee.find({ eId: userId });
-        const userMembers = await ProjectMember.find({ eId: userId });
-        const employees = await employeeModel.find({ eId: { $in: userMembers.map(member => member.eId) } });
+        if (!pId) {
+            return badRequest('project id is required');
+        }
 
-        return successDataResponse(employees);
+        const currentDate = new Date();
+        const currentWeek = weekNumber.getWeekNumber(currentDate);
+        const workloads = await WorkloadModel.find(
+            { 
+                eId: eId,
+                pId: pId,
+                weekOfYear: currentWeek,
+            }
+        );
+
+
+        return successDataResponse(workloads);
     } catch (error) {
         console.error(error);
 
@@ -75,39 +247,326 @@ async function getProjectByUser(req, res) {
         // });
         return errServerResponse("Internal Server Error");
     }
+
 }
 
-async function getUserByProject(req, res) {
-    const projectId = req.query.pId || "";
+async function updateWorkLoad(req, res) {
+    // const eId = req.query.eId;
+    // const pId = req.query.pId;
+    let {
+        eId,
+        pId,
+        workload,
+        detail,
+        notations
+    } = req.body
 
     try {
-        if (!projectId) {
-            return badRequest('projectId is required');
-        }
+        
+        const currentDate = new Date()
+        const currentWeek = weekNumber.getWeekNumber(currentDate);
 
-        // const userProjects = await Employee.find({ eId: userId });
-        const userMembers = await ProjectMember.find({ pId: projectId });
-        const employees = await employeeModel.find({ eId: { $in: userMembers.map(member => member.eId) } });
+        const insertOrUpdate = await WorkloadModel.updateOne(
+            { 
+                pId: pId,
+                eId: eId,
+                weekOfYear: currentWeek 
+            }, // เงื่อนไขในการค้นหา
+            { $set: {
+                    eId: eId,
+                    pId: pId,
+                    workLoad : workload,
+                    desc: detail,
+                    notation: notations
+                } 
+            }, // การอัปเดตข้อมูล
+            { upsert: true } // ถ้าไม่พบเอกสาร จะทำการสร้างเอกสารใหม่
+        );
 
-        return {
-            error: false,
-            result: employees
-        };
+        // console.log("insertOrUpdate : ", insertOrUpdate);
+        
+        return successDataResponse({
+            message : `insert or update success`
+        });
     } catch (error) {
         console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-
         return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getEmpDropdown(req, res) {
+    const leadId = req.query.leadId
+    try {
+
+        if (!leadId) {
+            return badRequest("lead id requried.")
+        }
+
+        const projects = await ProjectModel.find({
+            lead: leadId
+        })
+        // console.log("projects : ", projects);
+        
+
+        const members = await ProjectMemberModel.find(
+            { pId : {$in : projects.map(project => project.id)} }
+        )
+        // console.log("members : ", members);
+        
+
+        const employees = await EmployeeModel.find(
+            { eId : { $in : members.map(member => member.eId)}}
+        )
+        // console.log("employees : ", employees);
+        
+
+        let result = []
+        for (const employee of employees) {
+            let data = {
+                eId : employee.eId,
+                fullName : `${employee.name} ${employee.surname}`,
+            }
+            result.push(data)
+        }
+
+        return successDataResponse(result);
+    } catch (error) {
+        console.error(error);
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getProjectDropdown(req, res) {
+    const leadId = req.query.leadId || ""
+    try {
+
+        if (!leadId) {
+            return badRequest('lead id requried.')
+        }
+        const projects = await ProjectModel.find({
+            lead: leadId
+        })
+
+        let result = []
+        for (const project of projects) {
+            data = {
+                pId : project.id,
+                projectName : project.projectName
+            }
+            result.push(data)
+        }
+
+        return successDataResponse(result);
+    } catch (error) {
+        console.error(error);
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getWorkLoadHistory(req, res) {
+    const { leadId, projectId, employeeId } = req.query;
+
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+    let offset = (page - 1) * size;
+
+    try {
+        if (!leadId) {
+            return badRequest('leadId is required.');
+        }
+
+        const projects = await ProjectModel.find({ lead: leadId });
+        const workloadQuery = { pId: { $in: projects.map(project => project.id) } };
+        if (projectId) {
+            workloadQuery.id = projectId;
+        }
+        if (employeeId) {
+            workloadQuery.eId = employeeId;
+        }
+
+        const workloads = await WorkloadModel.find(workloadQuery).skip(offset).limit(size).sort({ createdAt: -1 });
+        const workloadtotal = await WorkloadModel.countDocuments(workloadQuery);
+
+        const employees = await EmployeeModel.find({ eId: { $in: workloads.map(workload => workload.eId) } });
+        // console.log(employees);
+        
+        const result = workloads.map(workload => ({
+            id: workload._id,
+            desc: workload.desc,
+            createdAt: workload.createdAt,
+            eFullName: employees.find(employee => employee.eId === workload.eId)
+                ? `${employees.find(employee => employee.eId === workload.eId).name} ${employees.find(employee => employee.eId === workload.eId).surname}`
+                : '',
+            eShortName: employees.find(employee => employee.eId === workload.eId)
+                ? employees.find(employee => employee.eId === workload.eId).shortname
+                : '',
+            projectName: projects.find(project => project.id === workload.pId)
+                ? projects.find(project => project.id === workload.pId).projectName
+                : '',
+        }));
+
+        return successDataResponse({
+            result : result,
+            total : result.length,
+            totalAll : workloadtotal
+        });
+    } catch (error) {
+        console.log(error);
+        
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function getworkloadHistoryDetail(req, res) {
+    const workloadId = req.query.workloadId || ""
+
+    try {
+        if (!workloadId) {
+            return badRequest('workload id is required.');
+        }
+        
+        const workload = await WorkloadModel.findOne({
+            _id: workloadId
+        })
+
+        return successDataResponse(workload);
+    } catch (error) {
+        return errServerResponse("Internal Server Error");
+    }
+}
+
+async function addEmployeeToProject(req, res) {
+    const employeeId = req.query.eId;
+    const projectId = req.query.pId;
+
+    if (!employeeId) {
+        return badRequest('Employee ID is required.');
+    }
+
+    if (!projectId) {
+        return badRequest('Project ID is required.');
+    }
+
+    try {
+        const employee = await EmployeeModel.findOne({ eId: employeeId });
+        if (!employee) {
+            return errServerResponse('Employee not found.');
+        }
+
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            return errServerResponse('Project not found.');
+        }
+
+        const newEmployeeProject = await ProjectMemberModel.create({
+            eId: employeeId,
+            pId: projectId
+        });
+
+        if (!newEmployeeProject) {
+            return errServerResponse('Failed to add employee to project.');
+        }
+
+        return successDataResponse({
+            message: 'Employee added to project successfully.'
+        });
+    } catch (error) {
+        console.log(error);
+        
+        return errServerResponse('Internal Server Error');
+    }
+}
+
+async function deleteEmployeeFromProject(req, res) {
+    const employeeId = req.query.eId;
+    const projectId = req.query.pId;
+
+    if (!employeeId) {
+        return badRequest('Employee ID is required.');
+    }
+
+    if (!projectId) {
+        return badRequest('Project ID is required.');
+    }
+
+    try {
+        const employee = await EmployeeModel.findOne({ eId: employeeId });
+        if (!employee) {
+            return errServerResponse('Employee not found.');
+        }
+
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            return errServerResponse('Project not found.');
+        }
+
+        const deleteResult = await ProjectMemberModel.findOneAndDelete({
+            eId : employeeId,
+            pId : projectId
+        });
+
+        if (!deleteResult) {
+            return errServerResponse('Failed to delete employee from project.');
+        }
+
+        return successDataResponse({
+            message: 'Employee deleted from project successfully.'
+        });
+    } catch (error) {
+        return errServerResponse('Internal Server Error');
+    }
+}
+
+async function getAllEmployee(req, res) {
+    const employeeName = req.query.employeeName;
+
+    try {
+        const employees = await EmployeeModel.aggregate([
+            {
+                $addFields: {
+                    fullName: { $concat: ["$name", " ", "$surname"] } // รวม name กับ surname เข้าด้วยกัน
+                }
+            },
+            {
+                $match: {
+                    fullName: { 
+                        $regex: employeeName ? employeeName : '', // ค้นหาตาม employeeName
+                        $options: 'i' // ไม่สนใจตัวพิมพ์เล็ก-ใหญ่
+                    }
+                }
+            },
+            {
+                $project: {
+                    eId : 1,
+                    name : 1,
+                    surname : 1,
+                }
+            }
+        ]);
+
+        let result = employees.map(employee => ({
+            eId : employee.eId,
+            fullName : `${employee.name} ${employee.surname}`,
+        }));
+        
+        return successDataResponse(result);
+    } catch (error) {
+        return errServerResponse('Internal Server Error');
     }
 }
 
 // Export the function
 module.exports = {
-    getProjectByUser, 
-    getProjects, 
-    getUserByProject
+    getProjects,
+    getGraph,
+    getProjectMenberList,
+    getWorkLoad,
+    updateWorkLoad,
+    getEmpDropdown,
+    getProjectDropdown,
+    getWorkLoadHistory,
+    getworkloadHistoryDetail,
+    addEmployeeToProject,
+    deleteEmployeeFromProject,
+    getAllEmployee
 };
