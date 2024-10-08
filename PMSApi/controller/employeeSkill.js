@@ -3,7 +3,7 @@ const EmployeeSkillModel = require('../models/EmployeeSkill.model');
 
 async function GetEmployeeSkills (req, res, next) {
     try {
-        const eId = req.params.eId || req.query.id ;
+        const eId = req.query.eId ;
         if (!eId) {
             return res.status(400).send({
                 status: 400,

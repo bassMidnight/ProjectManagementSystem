@@ -5,14 +5,14 @@ var employeeSkillController = require('../controller/employeeSkill.js');
 
 //Employee
 router.get('/', employeeController.GetEmployees);
-router.get('/:id', employeeController.GetEmployeeById);
+router.get('/', employeeController.GetEmployeeById);
 router.post('/', employeeController.CreateEmployee);
-router.put('/:id', employeeController.UpdateEmployeeById);
-router.delete('/:id', employeeController.DeleteEmployeeById);
+router.put('/', employeeController.UpdateEmployeeById);
+router.delete('/', employeeController.DeleteEmployeeById);
 
 //EmployeeSkill
-router.get('/:eId/skills', employeeSkillController.GetEmployeeSkills);
-router.post('/:eId/skills', employeeSkillController.AddEmployeeSkill);
-router.delete('/:eId/skills', employeeSkillController.RemoveEmployeeSkill);
+router.get('/skills', employeeSkillController.GetEmployeeSkills);
+router.post('/skills', employeeSkillController.AddEmployeeSkill);
+router.delete('/skills', employeeSkillController.RemoveEmployeeSkill);
 
 module.exports = router;

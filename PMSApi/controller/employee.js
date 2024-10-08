@@ -1,6 +1,9 @@
 const employeeModel = require("../models/employee.model");
 
 async function GetEmployees (req, res, next) {
+    if (req.query.eId) {
+        return GetEmployeeById(req, res, next);
+    }
     try {
         const employees = await employeeModel.find();
         res.send({
@@ -15,8 +18,8 @@ async function GetEmployees (req, res, next) {
 
 async function GetEmployeeById (req, res, next) {
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOne({ eId: id });
+        const eId = req.query.eId;
+        const employee = await employeeModel.findOne({ eId });
         if (!employee) {
             return res.status(404).send({
                 status: 404,
@@ -48,8 +51,8 @@ async function CreateEmployee (req, res, next) {
 
 async function UpdateEmployeeById (req, res, next) {
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOneAndUpdate({ eId: id }, req.body, { new: true });
+        const eId = req.query.eId;
+        const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
             return res.status(404).send({
                 status: 404,
