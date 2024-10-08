@@ -15,7 +15,7 @@ async function GetAllSkills(req, res) {
 
 async function GetSkillById(req, res, next) {
     try {
-        const skill = await skillModel.findById(req.params.id);
+        const skill = await skillModel.find({id: req.params.id});
         if (!skill) {
             return next(new Error('Skill not found'));
         }
@@ -31,14 +31,11 @@ async function GetSkillById(req, res, next) {
 
 async function CreateSkill (req, res, next) {
     try {
-        const id = req.body.name.slice(0, 4).toUpperCase()+"001";
-        if (!id) {
-            return next(new Error('Skill id is required'));
-        }
         const name = req.body.name;
         if (!name) {
             return next(new Error('Skill name is required'));
         }
+        const id = req.body.name.slice(0, 4).toUpperCase()+"001";
         const skill = await skillModel.create({
             id: id,
             name: name,
