@@ -72,8 +72,8 @@ async function UpdateEmployeeById (req, res, next) {
 
 async function DeleteEmployeeById (req, res, next) {
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOneAndDelete({ eId: id });
+        const eId = req.query.eId;
+        const employee = await employeeModel.findOneAndDelete({ eId });
         if (!employee) {
             return res.status(404).send({
                 status: 404,
