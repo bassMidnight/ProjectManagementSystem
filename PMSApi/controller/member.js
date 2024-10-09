@@ -7,7 +7,8 @@ const { weeklyQueryByEId, weeklyQueryByEIds,
         weeklyQueryWorkloadByPIds, weeklyQueryByEIdAndPId,
         weeklyMemberQueryByWeek, weeklyMemberProjectQueryByWeek,
         weeklyMemberProjectQueryByWeeks, MemberWorkloadOverview,
-        MemberWorkloadOverviewMonthly, MemberWorkloadOverviewTwelveMonths
+        MemberWorkloadOverviewMonthly, MemberWorkloadOverviewTwelveMonths,
+        weeklyMemberQueryByWeekByNameOrProject
     } = require("../utils/weeklyQuery")
 
 async function GetAllMembers(req, res) {
@@ -28,6 +29,27 @@ async function GetAllMembers(req, res) {
         res.status(500).json({ status: "500", message: "An error occurred while fetching all members" });
     }
 }
+
+async function GetAllMembersByNameOrProject(req,res){
+    try {
+        let lead = req.query.lead;
+        let name = req.query.name;
+        let projectName = req.query.projectName;
+        let date = req.query.date;
+        let currentWeek = getWeekNumber(date ? new Date(date) : new Date());
+        const members = await weeklyMemberQueryByWeekByNameOrProject(lead,currentWeek,date ? new Date(date).getFullYear() : new Date().getFullYear(),projectName,name);
+        res.status(200).json({
+            status: "200",
+            message: "success",
+            data: {length:members.length,members:members}
+        });
+    }
+    catch (err) {
+        console.error("Error in GetAllMembersByNameOrProject:", err);
+        res.status(500).json({ status: "500", message: "An error occurred while fetching all members by name or project" });
+    }
+}
+
 async function GetAllProjectsAndWorkload(req, res) {
     try {
         let eId = req.query.eid;
@@ -231,4 +253,5 @@ module.exports = {
     GetEmployeesCurrentWeeklyWorkload,
     GetMemberWorkloadOverview,
     GetMemberWorkloadOverviewMonthly,
+    GetAllMembersByNameOrProject
 }
