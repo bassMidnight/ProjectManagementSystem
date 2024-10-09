@@ -15,4 +15,5 @@ router.get('/skills', employeeSkillController.GetEmployeeSkills);
 router.post('/skills', employeeSkillController.AddEmployeeSkill);
 router.delete('/skills', employeeSkillController.RemoveEmployeeSkill);
 
+router.get('/workload', controller.GetEmployeeProjectMemberWorkload);
 module.exports = router;

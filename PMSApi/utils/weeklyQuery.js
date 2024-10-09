@@ -81,6 +81,109 @@ async function weeklyMemberQueryByWeek(lead, weekOfYear, year) {
     return members;
 }
 
+async function weeklyMemberQueryByWeekByNameOrProject(lead, weekOfYear, year, projectName, name) {
+    try {
+        const matchCondition = year
+            ? {
+                weekOfYear: weekOfYear,
+                createdAt: {
+                    $gte: new Date(year, 0, 1),
+                    $lt: new Date(year + 1, 0, 1)
+                }
+            }
+            : { weekOfYear: weekOfYear };
+        
+        const projectMatchCondition = {
+            $and: [
+                lead ? { lead: lead } : {},
+                projectName ? { projectName: { $regex: String(projectName), $options: 'i' } } : {}
+            ]
+        };
+
+        const members = await Project.aggregate([
+            { $match: projectMatchCondition },
+            {
+                $lookup: {
+                    from: "projectmembers",
+                    localField: "id",
+                    foreignField: "pId",
+                    as: "members"
+                }
+            },
+            { $unwind: "$members" },
+            {
+                $lookup: {
+                    from: "employees",
+                    localField: "members.eId",
+                    foreignField: "eId",
+                    as: "employeeDetails"
+                }
+            },
+            { $unwind: "$employeeDetails" },
+            {
+                $lookup: {
+                    from: "workloads",
+                    let: { eId: "$members.eId", pId: "$id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $and: [
+                                    { $expr: { $eq: ["$eId", "$$eId"] } },
+                                    { $expr: { $eq: ["$pId", "$$pId"] } },
+                                    matchCondition
+                                ]
+                            }
+                        }
+                    ],
+                    as: "workload"
+                }
+            },
+            {
+                $addFields: {
+                    workload: {
+                        $cond: [
+                            { $eq: [{ $size: "$workload" }, 0] },
+                            0,
+                            { $sum: "$workload.workload" }
+                        ]
+                    }
+                }
+            },
+            {
+                $match: name ? {
+                    $expr: {
+                        $regexMatch: {
+                            input: { $concat: ["$employeeDetails.name"," ", "$employeeDetails.surname"] },
+                            regex: String(name),
+                            options: "i"
+                        }
+                    }
+                } : {}
+            },
+            {
+                $project: {
+                    _id: 0,
+                    employeeId: "$members.eId",
+                    employeeName: "$employeeDetails.name",
+                    employeeSurname: "$employeeDetails.surname",
+                    employeeShortName: "$employeeDetails.shortname",
+                    employeePosition: "$employeeDetails.position",
+                    employeeStartDate: "$employeeDetails.startDate",
+                    projectName: 1,
+                    lead: 1,
+                    workload: 1
+                }
+            }
+        ]);
+
+        console.log(`Found ${members.length} members`);
+        return members;
+    } catch (error) {
+        console.error("Error in weeklyMemberQueryByWeekByNameOrProject:", error);
+        throw new Error("An error occurred while fetching all members by name or project");
+    }
+}
+
 
 async function weeklyMemberProjectQueryByWeek(eId, weekOfYear, year) {
     const matchCondition = year
@@ -354,13 +457,14 @@ async function weeklyQueryByEId(eId, weekOfYear, year) {
     }
 }
 
-async function weeklyQueryByPId(pId, weekOfYear) {
+async function weeklyQueryByPId(pId, weekOfYear, year) {
     try {
         const workloads = await Workload.aggregate([
             {
                 $match: {
                     pId: pId,
-                    weekOfYear: weekOfYear
+                    weekOfYear: weekOfYear,
+                    $expr: { $eq: [{ $year: "$createdAt" }, year] }
                 }
             },
             {
@@ -502,5 +606,6 @@ module.exports = {
     weeklyMemberProjectQueryByWeeks,
     MemberWorkloadOverview,
     MemberWorkloadOverviewMonthly,
-    MemberWorkloadOverviewTwelveMonths
+    MemberWorkloadOverviewTwelveMonths,
+    weeklyMemberQueryByWeekByNameOrProject
 }

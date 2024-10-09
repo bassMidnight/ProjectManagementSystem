@@ -1,71 +1,26 @@
 var express = require('express');
 var router = express.Router();
 
-const controller = require('../controller/senior.js');
+const controller = require('../controller/senior');
 
 // senior Main page
-router.get('/', async function(req, res) {
-    const response = await controller.getProjects(req, res);
-    res.status(200).json(response);
-});
-
-router.get('/projectGraph', async function(req, res) {
-    const response = await controller.getGraph(req, res);
-    res.status(200).json(response);
-});
-
-router.get('/projectMemberList', async function(req, res) {
-    const response = await controller.getProjectMenberList(req, res);
-    res.status(200).json(response);
-});
-
-router.get('/workloadMember', async function(req, res) {
-    const response = await controller.getWorkLoad(req, res);
-    res.status(200).json(response);
-});
-
-router.put('/workloadMember', async function (req, res) {
-    const response = await controller.updateWorkLoad(req, res);
-    res.status(200).json(response);
-})
+router.get('/',  controller.getProjects ); 
+router.get('/projectGraph', controller.getGraph );
+router.get('/projectMemberList', controller.getProjectMenberList );
+router.get('/workloadMember', controller.getWorkLoad );
+router.put('/workloadMember', controller.updateWorkLoad ); // 
 
 // senior history page
 
-router.get('/employeeDropdown', async function (req, res) {
-    const response = await controller.getEmpDropdown(req, res);
-    res.status(200).json(response);
-})
+router.get('/employeeDropdown', controller.getEmpDropdown );
+router.get('/projectDropdown', controller.getProjectDropdown );
+router.get('/workloadHistory', controller.getWorkLoadHistory );
+router.get('/workloadHistoryDetail', controller.getworkloadHistoryDetail );
 
-router.get('/projectDropdown', async function (req, res) {
-    const response = await controller.getProjectDropdown(req, res);
-    res.status(200).json(response);
-})
+// add - remove employee from project
 
-router.get('/workloadHistory', async function (req, res) {
-    const response = await controller.getWorkLoadHistory(req, res);
-    res.status(200).json(response);
-})
-
-router.get('/workloadHistoryDetail', async function (req, res) {
-    const response = await controller.getworkloadHistoryDetail(req, res);
-    res.status(200).json(response);
-})
-
-// เพิ่ม - ลบ สมาชิกจากโปรเจค
-
-router.get('/allEmployee', async function (req, res) {
-    const response = await controller.getAllEmployee(req, res);
-    res.status(200).json(response);
-})
-
-router.post('/employeeProject', async function (req, res) {
-    const response = await controller.addEmployeeToProject(req, res);
-    res.status(200).json(response);
-})
-
-router.delete('/employeeProject', async function (req, res) {
-    const response = await controller.deleteEmployeeFromProject(req, res);
-    res.status(200).json(response);
-})
+router.get('/allEmployee', controller.getAllEmployee );
+router.post('/employeeProject', controller.addEmployeeToProject );
+router.delete('/employeeProject', controller.deleteEmployeeFromProject );
 
 module.exports = router;
