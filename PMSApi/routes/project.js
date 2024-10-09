@@ -21,12 +21,12 @@ router.get('/userByProject', async function(req, res) {
 });
 
 //project skill route
-router.get('/:pId/skill', async function(req, res) {
+router.get('/projectskill', async function(req, res) {
     const response = await projectSkillController.GetProjectSkills(req, res);
     res.status(200).json(response);
 });
 
-router.post('/:pId/projectskill', async function(req, res) {
+router.post('/projectskill', async function(req, res) {
     const response = await projectSkillController.AddProjectSkill(req, res);
     res.status(200).json(response);
 });

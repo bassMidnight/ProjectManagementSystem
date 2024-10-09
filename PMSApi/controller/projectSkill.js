@@ -1,14 +1,12 @@
 const projectSkillModel = require('../models/projectSkill.model');
+const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetProjectSkills(req, res, next) {
+    const pId = req.query.pId;
+    if (!pId) {
+        return badRequest('project id is required');
+    }
     try {
-        const pId = req.query.pId || req.params.pId;
-        if (!pId) {
-            return res.status(400).send({
-                status: 400,
-                message: "project id is required",
-            });
-        }
         const projectskills = await projectSkillModel.aggregate([
             {
                 $lookup: {
@@ -22,7 +20,7 @@ async function GetProjectSkills(req, res, next) {
                 $unwind: '$skills'
             },
             {
-                $match: {pId: pId}
+                $match: { pId: pId }
             },
             {
                 $project: {
@@ -47,23 +45,17 @@ async function GetProjectSkills(req, res, next) {
 }
 
 async function AddProjectSkill(req, res, next) {
+    const pId = req.query.pId;
+    if (!pId) {
+        return badRequest('project id is required');
+    }
+    const sId = req.query.sId;
+    if (!sId) {
+        return badRequest('skill id is required');
+    }
     try {
-        const project = req.params.pId;
-        if (!project) {
-            return res.status(400).send({
-                status: 400,
-                message: "project id is required",
-            });
-        }
-        const sId = req.query.sId;
-        if (!sId) {
-            return res.status(400).send({
-                status: 400,
-                message: "skill id is required",
-            });
-        }
         const projectSkill = await projectSkillModel.create({
-            pId: project,
+            pId: pId,
             sId: sId
         });
         res.send({
@@ -77,27 +69,18 @@ async function AddProjectSkill(req, res, next) {
 }
 
 async function RemoveProjectSkill(req, res, next) {
+    const pId = req.query.pId;
+    if (!pId) {
+        return badRequest('project id is required');
+    }
+    const sId = req.query.sId;
+    if (!sId) {
+        return badRequest('skill id is required');
+    }
     try {
-        const pId = req.query.pId || req.params.pId;
-        if (!pId) {
-            return res.status(400).send({
-                status: 400,
-                message: "project id is required",
-            });
-        }
-        const sId = req.query.sId;
-        if (!sId) {
-            return res.status(400).send({
-                status: 400,
-                message: "skill id is required",
-            });
-        }
         const projectSkill = await projectSkillModel.findOneAndDelete({ pId: pId, sId: sId });
         if (!projectSkill) {
-            return res.status(404).send({
-                status: 404,
-                message: "project skill not found",
-            });
+            return dataNotFound('project skill not found');
         }
         res.send({
             status: 200,
