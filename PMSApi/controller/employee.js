@@ -1,4 +1,5 @@
 const employeeModel = require("../models/employee.model");
+const { dataNotFound } = require("../utils/response");
 
 async function GetEmployees (req, res, next) {
     if (req.query.eId) {
@@ -17,14 +18,11 @@ async function GetEmployees (req, res, next) {
 }
 
 async function GetEmployeeById (req, res, next) {
+    const eId = req.query.eId;
+    const employee = await employeeModel.findOne({ eId });
     try {
-        const eId = req.query.eId;
-        const employee = await employeeModel.findOne({ eId });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
@@ -54,10 +52,7 @@ async function UpdateEmployeeById (req, res, next) {
         const eId = req.query.eId;
         const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
@@ -75,10 +70,7 @@ async function DeleteEmployeeById (req, res, next) {
         const eId = req.query.eId;
         const employee = await employeeModel.findOneAndDelete({ eId });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
