@@ -2,6 +2,7 @@ const employeeModel = require('../models/employee.model');
 const projectMemberModel = require('../models/projectMember.model');
 const workloadModel = require('../models/workload.model');
 
+let {getWeekNumber} = require('../utils/getWeekNumber');
 async function GetEmployeeWorkload(req, res) {
     try {
         const workload = await workloadModel.find({ eId: req.params.eId });
@@ -13,13 +14,16 @@ async function GetEmployeeWorkload(req, res) {
 
 async function CreateEmployeeWorkload(req, res) {
     try {
+
+        let currentWeek = getWeekNumber(new Date());
         const workload = await workloadModel.create({
             pId: req.params.pId,
             eId: req.params.eId,
             workload: req.body.workload,
             desc: req.body.desc,
             date: Date.now(),
-            notation: req.body.notation
+            notation: req.body.notation,
+            weekOfYear: currentWeek
         });
         res.status(200).json({message:"created successfully", data: workload});
     } catch (err) {

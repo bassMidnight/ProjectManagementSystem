@@ -34,6 +34,8 @@ async function GetAllMembersByNameOrProject(req,res){
     try {
         let lead = req.query.lead;
         let name = req.query.name;
+        console.log(name);
+        
         let projectName = req.query.projectName;
         let date = req.query.date;
         let currentWeek = getWeekNumber(date ? new Date(date) : new Date());

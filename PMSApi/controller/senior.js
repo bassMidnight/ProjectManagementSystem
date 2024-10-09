@@ -16,7 +16,7 @@ async function getProjects(req, res) {
         console.log("getProjects");
 
         if (!leadId) {
-            return badRequest('leadId is required');
+            throw new Error(`leader id is required`);
         }
         
         const currentDate = new Date(date);
@@ -45,6 +45,7 @@ async function getProjects(req, res) {
                 }
             }
         ]);
+        // console.log(aggregatedWorkloads);
         
                   
         let result = [];
@@ -57,16 +58,17 @@ async function getProjects(req, res) {
             
             for (const workload of aggregatedWorkloads) {
                 if (project.id == workload._id) {
-                    workload_data = workload.avgWorkload || "0.00"
+                    workload_data = workload.avgWorkload || 0.00
                     workload_data = workload_data.toFixed(2)
                     data.workload  = workload_data
                 }
             }
             result.push(data);
         }
-                
-        return successDataResponse({
-            result: result, 
+        res.status(200).json({
+            error : false,
+            message : "Success",
+            data : result
         });
     } catch (error) {
         console.error(error);
@@ -75,7 +77,8 @@ async function getProjects(req, res) {
         //     error: true,
         //     message: "Internal Server Error"
         // });
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -85,7 +88,7 @@ async function getGraph(req, res) {
 
     try {
         if (!projectId) {
-            return badRequest('project id is required');
+            throw new Error(`project id is required`);
         }
         
         let workloads;
@@ -141,7 +144,8 @@ async function getGraph(req, res) {
             ]);
         }
 
-        return successDataResponse(workloads);
+        // return successDataResponse(workloads);
+        res.status(200).json({ error: false, message: "success", data: workloads });
     } catch (error) {
         console.error(error);
 
@@ -149,7 +153,8 @@ async function getGraph(req, res) {
         //     error: true,
         //     message: "Internal Server Error"
         // });
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -158,7 +163,7 @@ async function getProjectMenberList(req, res) {
 
     try {
         if (!projectId) {
-            return badRequest('project id is required');
+            throw new Error(`project id is required`);
         }
 
         const currentDate = new Date();
@@ -201,7 +206,8 @@ async function getProjectMenberList(req, res) {
             result.push(data);
         }
 
-        return successDataResponse(result);
+        // return successDataResponse(result);
+        req.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
         console.error(error);
 
@@ -209,7 +215,8 @@ async function getProjectMenberList(req, res) {
         //     error: true,
         //     message: "Internal Server Error"
         // });
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 
 }
@@ -219,11 +226,13 @@ async function getWorkLoad(req, res) {
 
     try {
         if (!eId) {
-            return badRequest('employee id is required');
+            // return badRequest('employee id is required');
+            throw new Error('employee id is required');
         }
 
         if (!pId) {
-            return badRequest('project id is required');
+            // return badRequest('project id is required');
+            throw new Error('project id is required');
         }
 
         const currentDate = new Date();
@@ -237,7 +246,8 @@ async function getWorkLoad(req, res) {
         );
 
 
-        return successDataResponse(workloads);
+        // return successDataResponse(workloads);
+        return res.status(200).json({ error: false, message: "success", data: workloads });
     } catch (error) {
         console.error(error);
 
@@ -245,7 +255,8 @@ async function getWorkLoad(req, res) {
         //     error: true,
         //     message: "Internal Server Error"
         // });
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 
 }
@@ -285,12 +296,14 @@ async function updateWorkLoad(req, res) {
 
         // console.log("insertOrUpdate : ", insertOrUpdate);
         
-        return successDataResponse({
-            message : `insert or update success`
-        });
+        // return successDataResponse({
+        //     message : `insert or update success`
+        // });
+        return res.status(200).json({ error: false, message: "insert or update success"});
     } catch (error) {
         console.error(error);
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -299,7 +312,8 @@ async function getEmpDropdown(req, res) {
     try {
 
         if (!leadId) {
-            return badRequest("lead id requried.")
+            // return badRequest("lead id requried.")
+            throw new Error("lead id requried.")
         }
 
         const projects = await ProjectModel.find({
@@ -329,10 +343,12 @@ async function getEmpDropdown(req, res) {
             result.push(data)
         }
 
-        return successDataResponse(result);
+        // return successDataResponse(result);
+        return res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
         console.error(error);
-        return errServerResponse("Internal Server Error");
+        // return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -341,7 +357,8 @@ async function getProjectDropdown(req, res) {
     try {
 
         if (!leadId) {
-            return badRequest('lead id requried.')
+            // return badRequest('lead id requried.')
+            throw new Error('leader id requried.')
         }
         const projects = await ProjectModel.find({
             lead: leadId
@@ -356,7 +373,8 @@ async function getProjectDropdown(req, res) {
             result.push(data)
         }
 
-        return successDataResponse(result);
+        // return successDataResponse(result);
+        return res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
         console.error(error);
         return errServerResponse("Internal Server Error");
@@ -372,7 +390,8 @@ async function getWorkLoadHistory(req, res) {
 
     try {
         if (!leadId) {
-            return badRequest('leadId is required.');
+            // return badRequest('leadId is required.');
+            throw new Error('leader id is required.');
         }
 
         const projects = await ProjectModel.find({ lead: leadId });
@@ -405,10 +424,19 @@ async function getWorkLoadHistory(req, res) {
                 : '',
         }));
 
-        return successDataResponse({
-            result : result,
-            total : result.length,
-            totalAll : workloadtotal
+        // return successDataResponse({
+        //     result : result,
+        //     total : result.length,
+        //     totalAll : workloadtotal
+        // });
+        return res.status(200).json({ 
+            error: false, 
+            message: "success", 
+            data: {
+                result : result,
+                total : result.length,
+                totalAll : workloadtotal
+            } 
         });
     } catch (error) {
         console.log(error);
@@ -422,14 +450,16 @@ async function getworkloadHistoryDetail(req, res) {
 
     try {
         if (!workloadId) {
-            return badRequest('workload id is required.');
+            // return badRequest('workload id is required.');
+            throw new Error('workload id is required.');
         }
         
         const workload = await WorkloadModel.findOne({
             _id: workloadId
         })
 
-        return successDataResponse(workload);
+        // return successDataResponse(workload);
+        return res.status(200).json({ error: false, message: "success", data: workload });
     } catch (error) {
         return errServerResponse("Internal Server Error");
     }
@@ -440,22 +470,26 @@ async function addEmployeeToProject(req, res) {
     const projectId = req.query.pId;
 
     if (!employeeId) {
-        return badRequest('Employee ID is required.');
+        // return badRequest('Employee ID is required.');
+        throw new Error('Employee ID is required.');
     }
 
     if (!projectId) {
-        return badRequest('Project ID is required.');
+        // return badRequest('Project ID is required.');
+        throw new Error('Project ID is required.');
     }
 
     try {
         const employee = await EmployeeModel.findOne({ eId: employeeId });
         if (!employee) {
-            return errServerResponse('Employee not found.');
+            // return errServerResponse('Employee not found.');
+            throw new Error('Employee not found.');
         }
 
         const project = await ProjectModel.findOne({ id: projectId });
         if (!project) {
-            return errServerResponse('Project not found.');
+            // return errServerResponse('Project not found.');
+            throw new Error('Project not found.');
         }
 
         const newEmployeeProject = await ProjectMemberModel.create({
@@ -467,9 +501,10 @@ async function addEmployeeToProject(req, res) {
             return errServerResponse('Failed to add employee to project.');
         }
 
-        return successDataResponse({
-            message: 'Employee added to project successfully.'
-        });
+        // return successDataResponse({
+        //     message: 'Employee added to project successfully.'
+        // });
+        return res.status(200).json({ error: false, message: "Employee added to project successfully."});
     } catch (error) {
         console.log(error);
         
@@ -482,11 +517,13 @@ async function deleteEmployeeFromProject(req, res) {
     const projectId = req.query.pId;
 
     if (!employeeId) {
-        return badRequest('Employee ID is required.');
+        // return badRequest('Employee ID is required.');
+        throw new Error('Employee ID is required.');
     }
 
     if (!projectId) {
-        return badRequest('Project ID is required.');
+        // return badRequest('Project ID is required.');
+        throw new Error('Project ID is required.');
     }
 
     try {
@@ -509,9 +546,10 @@ async function deleteEmployeeFromProject(req, res) {
             return errServerResponse('Failed to delete employee from project.');
         }
 
-        return successDataResponse({
-            message: 'Employee deleted from project successfully.'
-        });
+        // return successDataResponse({
+        //     message: 'Employee deleted from project successfully.'
+        // });
+        return res.status(200).json({ error: false, message: "Employee deleted from project successfully."});
     } catch (error) {
         return errServerResponse('Internal Server Error');
     }
@@ -549,9 +587,11 @@ async function getAllEmployee(req, res) {
             fullName : `${employee.name} ${employee.surname}`,
         }));
         
-        return successDataResponse(result);
+        // return successDataResponse(result);
+        return res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
-        return errServerResponse('Internal Server Error');
+        // return errServerResponse('Internal Server Error');
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 

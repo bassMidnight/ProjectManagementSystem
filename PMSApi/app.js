@@ -12,6 +12,7 @@ var employeeRouter = require('./routes/employee');
 var workloadRouter = require('./routes/workload');
 var skillRouter = require('./routes/skill');
 var seniorRouter = require('./routes/senior');
+var adminRouter = require('./routes/admin');
 var memberRouter = require('./routes/member');
 var app = express();
 var cors = require('cors');
@@ -28,15 +29,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/api', apiRouter);
-app.use('/project', projectRouter);
-app.use('/employee', employeeRouter);
-app.use('/workload', workloadRouter);
-app.use('/skill', skillRouter);
-app.use('/senior', seniorRouter);
-app.use('/member', memberRouter);
+app.use('/api/v1/', indexRouter);
+app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/api', apiRouter);
+app.use('/api/v1/project', projectRouter);
+app.use('/api/v1/employee', employeeRouter);
+app.use('/api/v1/workload', workloadRouter);
+app.use('/api/v1/skill', skillRouter);
+app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/senior', seniorRouter);
+app.use('/api/v1/member', memberRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
