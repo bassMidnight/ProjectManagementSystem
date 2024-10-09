@@ -151,10 +151,13 @@ async function weeklyMemberQueryByWeekByNameOrProject(lead, weekOfYear, year, pr
             },
             {
                 $match: name ? {
-                    $or: [
-                        { "employeeDetails.name": { $regex: String(name), $options: 'i' } },
-                        { "employeeDetails.surname": { $regex: String(name), $options: 'i' } }
-                    ]
+                    $expr: {
+                        $regexMatch: {
+                            input: { $concat: ["$employeeDetails.name"," ", "$employeeDetails.surname"] },
+                            regex: String(name),
+                            options: "i"
+                        }
+                    }
                 } : {}
             },
             {
