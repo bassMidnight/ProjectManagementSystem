@@ -1,13 +1,9 @@
 var express = require('express');
 var router = express.Router();
-var controller = require('../controller/workload.js');
+const workloadController = require('../controller/workload.js');
 
-router.get('/:eId', controller.GetEmployeeWorkload);
 
-router.post('/:pId/:eId', controller.CreateEmployeeWorkload);
-
-router.put('/:pId/:eId', controller.UpdateEmployeeWorkload);
-
-router.delete('/:pId/:eId', controller.DeleteEmployeeWorkload);
+router.get('/weekly/:page', workloadController.GetEmployeeWorkload)
+router.post('/weekly', workloadController.CreateEmployeeWorkload)
 
 module.exports = router;

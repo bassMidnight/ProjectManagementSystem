@@ -1,18 +1,19 @@
 var express = require('express');
 var router = express.Router();
-var controller = require('../controller/employee.js');
+var employeeController = require('../controller/employee.js');
+var employeeSkillController = require('../controller/employeeSkill.js');
 
-router.get('/id', controller.GetEmployees);
+//Employee
+router.get('/', employeeController.GetEmployees);
+router.get('/', employeeController.GetEmployeeById);
+router.post('/', employeeController.CreateEmployee);
+router.put('/', employeeController.UpdateEmployeeById);
+router.delete('/', employeeController.DeleteEmployeeById);
 
-router.get('/id/:id', controller.GetEmployeeById);
-
-router.post('/id', controller.CreateEmployee);
-
-router.put('/id/:id', controller.UpdateEmployeeById);
-
-router.delete('/id/:id', controller.DeleteEmployeeById);
-
-router.get('/projects', controller.GetEmployeeAllProject);
+//EmployeeSkill
+router.get('/skills', employeeSkillController.GetEmployeeSkills);
+router.post('/skills', employeeSkillController.AddEmployeeSkill);
+router.delete('/skills', employeeSkillController.RemoveEmployeeSkill);
 
 router.get('/workload', controller.GetEmployeeProjectMemberWorkload);
 module.exports = router;

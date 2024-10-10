@@ -1,6 +1,6 @@
-const employeeModel = require('../models/employee.model');
-const projectMemberModel = require('../models/projectMember.model');
-const workloadModel = require('../models/workload.model');
+const ProjectModel = require('../models/project.model');
+const EmployeeModel = require('../models/employee.model'); // Import your Mongoose model
+const WorkloadModel = require('../models/workload.model'); // Import your Mongoose model
 
 let {getWeekNumber} = require('../utils/getWeekNumber');
 async function GetEmployeeWorkload(req, res) {
@@ -25,46 +25,42 @@ async function CreateEmployeeWorkload(req, res) {
             notation: req.body.notation,
             weekOfYear: currentWeek
         });
-        res.status(200).json({message:"created successfully", data: workload});
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    } catch (error) {
+        next(error);
     }
 }
 
-async function UpdateEmployeeWorkload(req, res) {
+async function CreateEmployeeWorkload (req, res, next) {
     try {
-        const workload = await workloadModel.findOneAndUpdate({ eId: req.params.eId, pId: req.params.pId },
-            req.body, { new: true });
-        res.status(200).json({message:"updated successfully", data: workload});
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        const pId = req.query.pId;
+        const eId = req.query.eId;
+
+        const project = await ProjectModel.findOne({ pId });
+        if (!project) {
+            return res.status(404).send({
+                status: 404,
+                message: "project not found",
+            });
+        }
+        const employee = await EmployeeModel.findOne({ eId });
+        if (!employee) {
+            return res.status(404).send({
+                status: 404,
+                message: "employee not found",
+            });
+        }
+        const workload = await WorkloadModel.create(req.body);
+        res.send({
+            status: 200,
+            message: "success",
+            data: workload,
+        });
+    } catch (error) {
+        next(error);
     }
 }
-
-async function DeleteEmployeeWorkload(req, res) {
-    try {
-        const workload = await workloadModel.findOneAndDelete({ eId: req.params.eId, pId: req.params.pId });
-        res.status(200).json("deleted successfully");
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-}
-
-// async function GetProjectMember(req, res) {
-//     try {
-//         // Find all project members with the given project ID
-//         const members = await projectMemberModel.find({ pId: req.params.pId });
-//         // Find all employees that are project members
-//         const employees = await employeeModel.find({ eId: { $in: members.map(member => member.eId) } });
-//         res.status(200).json({message:"success", data: employees});
-//     }catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// }
 
 module.exports = {
     GetEmployeeWorkload,
-    CreateEmployeeWorkload,
-    UpdateEmployeeWorkload,
-    DeleteEmployeeWorkload
+    CreateEmployeeWorkload
 }

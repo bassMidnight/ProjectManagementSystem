@@ -1,16 +1,20 @@
 const employeeModel = require("../models/employee.model");
+const { dataNotFound } = require("../utils/response");
 const employeeSkillModel = require("../models/EmployeeSkill.model");
 const projectModel = require("../models/project.model");
 const {weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId} = require("../utils/weeklyQuery");
 const {getWeekNumber} = require("../utils/getWeekNumber");
 
 async function GetEmployees (req, res, next) {
+    if (req.query.eId) {
+        return GetEmployeeById(req, res, next);
+    }
     try {
         const employees = await employeeModel.find();
         res.send({
             status: 200,
             message: "success",
-            data: [employees],
+            data: employees,
         });
     } catch (error) {
         next(error);
@@ -18,19 +22,16 @@ async function GetEmployees (req, res, next) {
 }
 
 async function GetEmployeeById (req, res, next) {
+    const eId = req.query.eId;
+    const employee = await employeeModel.findOne({ eId });
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOne({ eId: id });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
@@ -43,7 +44,7 @@ async function CreateEmployee (req, res, next) {
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
@@ -52,58 +53,39 @@ async function CreateEmployee (req, res, next) {
 
 async function UpdateEmployeeById (req, res, next) {
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOneAndUpdate({ eId: id }, req.body, { new: true });
+        const eId = req.query.eId;
+        const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
     }
 }
+
 
 async function DeleteEmployeeById (req, res, next) {
     try {
-        const id = req.params.id;
-        const employee = await employeeModel.findOneAndDelete({ eId: id });
+        const eId = req.query.eId;
+        const employee = await employeeModel.findOneAndDelete({ eId });
         if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
+            return dataNotFound("employee not found");
         }
         res.send({
             status: 200,
             message: "success",
-            data: [employee],
+            data: employee,
         });
     } catch (error) {
         next(error);
     }
 }
 
-async function GetEmployeeSkills (req, res, next) {
-    try {
-        const employees = await employeeModel.findOne({eId: id});
-        const employeeSkill = await employeeSkillModel.findOne({eId: employees.eId});
-        const skill = await skillModel.find({sId: employeeSkill.sId});
-        res.send({
-            status: 200,
-            message: "success",
-            data: [skill],
-        });
-    } catch (error) {
-        next(error);
-    }
-}
 
 async function GetEmployeeAllProject(req, res, next) {
     try {
