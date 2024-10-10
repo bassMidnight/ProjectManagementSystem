@@ -18,4 +18,8 @@ router.delete('/', async function(req, res) {
     await workloadcontroller.DeleteEmployeeWorkload(req, res);
 });
 
+router.get('/latest', async function(req, res) {
+    await workloadcontroller.GetlatestWorkload(req, res);
+});
+
 module.exports = router;

@@ -78,9 +78,31 @@ async function DeleteEmployeeWorkload(req, res) {
     }
 }
 
+async function GetlatestWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    try {
+        const workload = await workloadModel.find({eId: eId, pId: pId }).sort({ updatedAt: -1 }).limit(1);
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        return res.status(200).json({ data: workload });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 module.exports = {
     GetEmployeeWorkload,
     CreateEmployeeWorkload,
     UpdateEmployeeWorkload,
-    DeleteEmployeeWorkload
+    DeleteEmployeeWorkload,
+
+    GetlatestWorkload
 }
