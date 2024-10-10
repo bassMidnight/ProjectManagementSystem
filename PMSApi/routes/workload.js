@@ -1,13 +1,21 @@
 var express = require('express');
 var router = express.Router();
-var controller = require('../controller/workload.js');
+var workloadcontroller = require('../controller/workload.js');
 
-router.get('/:eId', controller.GetEmployeeWorkload);
+router.get('/', async function(req, res) {
+    await workloadcontroller.GetEmployeeWorkload(req, res);
+});
 
-router.post('/:pId/:eId', controller.CreateEmployeeWorkload);
+router.post('/', async function(req, res) {
+    await workloadcontroller.CreateEmployeeWorkload(req, res);
+});
 
-router.put('/:pId/:eId', controller.UpdateEmployeeWorkload);
+router.put('/', async function(req, res) {
+    await workloadcontroller.UpdateEmployeeWorkload(req, res);
+});
 
-router.delete('/:pId/:eId', controller.DeleteEmployeeWorkload);
+router.delete('/', async function(req, res) {
+    await workloadcontroller.DeleteEmployeeWorkload(req, res);
+});
 
 module.exports = router;
