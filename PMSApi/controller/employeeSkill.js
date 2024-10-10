@@ -4,7 +4,9 @@ const { badRequest, dataNotFound } = require('../utils/response');
 async function GetEmployeeSkills (req, res, next) {
     const eId = req.query.eId ;
     if (!eId) {
-        return badRequest('employee id is required');
+        return res.status(400).json({
+            message: 'employee id is required'
+        });
     }
     try {
         const employeeSkills = await EmployeeSkillModel.aggregate([
@@ -48,11 +50,15 @@ async function GetEmployeeSkills (req, res, next) {
 async function AddEmployeeSkill (req, res, next) {
     const eId = req.query.eId;
     if (!eId) {
-        return badRequest('employee id is required');
+        return res.status(400).json({
+            message: 'employee id is required'
+        })
     }
     const sId = req.query.sId;
     if (!sId) {
-        return badRequest('skill id is required');
+        return res.status(400).json({
+            message: 'skill id is required'
+        })
     }
     try {
         const employeeSkill = await EmployeeSkillModel.create({
@@ -72,16 +78,22 @@ async function AddEmployeeSkill (req, res, next) {
 async function RemoveEmployeeSkill(req, res, next) {
     const eId = req.query.eId;
     if (!eId) {
-        return badRequest('employee id is required');
+        return res.status(400).json({
+            message: 'employee id is required'
+        })
     }
     const sId = req.query.sId;
     if (!sId) {
-        return badRequest('skill id is required');
+        return res.status(400).json({
+            message: 'skill id is required'
+        })
     }
     try {
         const employeeSkill = await EmployeeSkillModel.findOneAndDelete({ eId: eId, sId: sId });
         if (!employeeSkill) {
-            return dataNotFound('employee skill not found');
+            return res.status(404).json({
+                message: 'employee skill not found'
+            })
         }
         res.send({
             status: 200,
