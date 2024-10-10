@@ -1,12 +1,22 @@
-const ProjectModel = require('../models/project.model');
-const EmployeeModel = require('../models/employee.model'); // Import your Mongoose model
-const WorkloadModel = require('../models/workload.model'); // Import your Mongoose model
+const projectMemberModel = require('../models/projectMember.model');
+const workloadModel = require('../models/workload.model');
 
 let {getWeekNumber} = require('../utils/getWeekNumber');
 async function GetEmployeeWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
     try {
-        const workload = await workloadModel.find({ eId: req.params.eId });
-        res.status(200).json({message:"success", data: workload});
+        const workload = await workloadModel.find({ eId: eId, pId: pId });
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        return res.status(200).json({ data: workload });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -14,53 +24,122 @@ async function GetEmployeeWorkload(req, res) {
 
 async function CreateEmployeeWorkload(req, res) {
     try {
-
         let currentWeek = getWeekNumber(new Date());
         const workload = await workloadModel.create({
-            pId: req.params.pId,
-            eId: req.params.eId,
+            pId: req.body.pId,
+            eId: req.body.eId,
             workload: req.body.workload,
             desc: req.body.desc,
-            date: Date.now(),
             notation: req.body.notation,
             weekOfYear: currentWeek
         });
-    } catch (error) {
-        next(error);
+        return res.status(200).json({message:"created successfully", data: workload});
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
     }
 }
 
-async function CreateEmployeeWorkload (req, res, next) {
+async function UpdateEmployeeWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    try {
+        const workload = await workloadModel.findOneAndUpdate({ eId: eId, pId: pId }, req.body, { new: true });
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        return res.status(200).json({message:"updated successfully", data: workload});
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+async function DeleteEmployeeWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    try {
+        const workload = await workloadModel.findOneAndDelete({ eId: eId, pId: pId });
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        res.status(200).json({message:"deleted successfully", data: workload});
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+async function GetlatestWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    try {
+        const workload = await workloadModel.find({eId: eId, pId: pId }).sort({ updatedAt: -1 }).limit(1);
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        return res.status(200).json({ data: workload });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+async function GetAllMembersAndWorkload(req, res) {
     try {
         const pId = req.query.pId;
-        const eId = req.query.eId;
+        if (!pId) {
+            return res.status(400).json({ message: 'pId is required' });
+        }
+        const members = await projectMemberModel.find({pId: pId});
+        console.log(members);
+        const workloads = await Promise.all(members.map(member => workloadModel.find({eId: member.eId}).sort({ updatedAt: -1 }).limit(1)));
+        return res.status(200).json({ data: workloads });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
 
-        const project = await ProjectModel.findOne({ pId });
-        if (!project) {
-            return res.status(404).send({
-                status: 404,
-                message: "project not found",
-            });
-        }
-        const employee = await EmployeeModel.findOne({ eId });
-        if (!employee) {
-            return res.status(404).send({
-                status: 404,
-                message: "employee not found",
-            });
-        }
-        const workload = await WorkloadModel.create(req.body);
-        res.send({
-            status: 200,
-            message: "success",
-            data: workload,
-        });
-    } catch (error) {
-        next(error);
+async function GetlatestProjectWorkload(req, res) {
+    try {
+        const workloads = await workloadModel.aggregate([
+            {
+                $group: {
+                    _id: "$pId",
+                    latestWorkload: { $last: "$$ROOT" }
+                }
+            },
+            {
+                $replaceRoot: { newRoot: "$latestWorkload" }
+            }
+        ]);
+        return res.status(200).json({ data: workloads });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
     }
 }
 
 module.exports = {
     GetEmployeeWorkload,
-    CreateEmployeeWorkload
+    CreateEmployeeWorkload,
+    UpdateEmployeeWorkload,
+    DeleteEmployeeWorkload,
+
+    GetlatestWorkload,
+    GetAllMembersAndWorkload,
+    GetlatestProjectWorkload
 }
