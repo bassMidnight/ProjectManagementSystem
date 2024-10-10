@@ -80,7 +80,5 @@ async function DeleteEmployeeWorkload(req, res) {
 
 module.exports = {
     GetEmployeeWorkload,
-    CreateEmployeeWorkload,
-    UpdateEmployeeWorkload,
-    DeleteEmployeeWorkload
+    CreateEmployeeWorkload
 }
