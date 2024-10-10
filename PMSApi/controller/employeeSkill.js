@@ -1,5 +1,4 @@
 const EmployeeSkillModel = require('../models/EmployeeSkill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetEmployeeSkills (req, res, next) {
     const eId = req.query.eId ;

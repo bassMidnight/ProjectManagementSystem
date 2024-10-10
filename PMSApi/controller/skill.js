@@ -1,5 +1,4 @@
 const skillModel = require('../models/skill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetAllSkills(req, res) {
     if (req.query.sId) {
