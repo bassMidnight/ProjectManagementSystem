@@ -234,15 +234,7 @@ async function getProjectMenberList(req, res) {
             };
         });
 
-<<<<<<< HEAD
-            result.push(data);
-        }
-
-        // return successDataResponse(result);
-        res.status(200).json({ error: false, message: "success", data: result });
-=======
         return res.status(200).json({ error: false, message: "success", data: result });
->>>>>>> 8b34b22c9f8697dc153e7dfe2814c4540e1a222e
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: true, message: error.message });
