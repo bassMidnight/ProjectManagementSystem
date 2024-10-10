@@ -207,7 +207,7 @@ async function getProjectMenberList(req, res) {
         }
 
         // return successDataResponse(result);
-        req.status(200).json({ error: false, message: "success", data: result });
+        res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
         console.error(error);
 
@@ -268,8 +268,8 @@ async function updateWorkLoad(req, res) {
         eId,
         pId,
         workload,
-        detail,
-        notations
+        desc,
+        notation
     } = req.body
 
     try {
@@ -287,8 +287,8 @@ async function updateWorkLoad(req, res) {
                     eId: eId,
                     pId: pId,
                     workLoad : workload,
-                    desc: detail,
-                    notation: notations
+                    desc: desc,
+                    notation: notation
                 } 
             }, // การอัปเดตข้อมูล
             { upsert: true } // ถ้าไม่พบเอกสาร จะทำการสร้างเอกสารใหม่
