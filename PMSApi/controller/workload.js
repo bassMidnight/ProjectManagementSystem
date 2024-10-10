@@ -105,9 +105,8 @@ async function GetAllMembersAndWorkload(req, res) {
         if (!pId) {
             return res.status(400).json({ message: 'pId is required' });
         }
-        const members = await projectMemberModel.find({pId: pId});
-        console.log(members);
-        const workloads = await Promise.all(members.map(member => workloadModel.find({eId: member.eId}).sort({ updatedAt: -1 }).limit(1)));
+        const currentWeek = getWeekNumber(new Date());
+        const workloads = await workloadModel.find({ pId: pId }).sort({ updatedAt: -1 });
         return res.status(200).json({ data: workloads });
     } catch (err) {
         return res.status(500).json({ message: err.message });
