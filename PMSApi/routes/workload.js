@@ -22,4 +22,8 @@ router.get('/latest', async function(req, res) {
     await workloadcontroller.GetlatestWorkload(req, res);
 });
 
+router.get('/memberworkload', async function(req, res) {
+    await workloadcontroller.GetAllMembersAndWorkload(req, res);
+});
+
 module.exports = router;
