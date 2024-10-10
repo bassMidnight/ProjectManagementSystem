@@ -114,6 +114,25 @@ async function GetAllMembersAndWorkload(req, res) {
     }
 }
 
+async function GetlatestProjectWorkload(req, res) {
+    try {
+        const workloads = await workloadModel.aggregate([
+            {
+                $group: {
+                    _id: "$pId",
+                    latestWorkload: { $last: "$$ROOT" }
+                }
+            },
+            {
+                $replaceRoot: { newRoot: "$latestWorkload" }
+            }
+        ]);
+        return res.status(200).json({ data: workloads });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 module.exports = {
     GetEmployeeWorkload,
     CreateEmployeeWorkload,
@@ -121,6 +140,6 @@ module.exports = {
     DeleteEmployeeWorkload,
 
     GetlatestWorkload,
-
-    GetAllMembersAndWorkload
+    GetAllMembersAndWorkload,
+    GetlatestProjectWorkload
 }
