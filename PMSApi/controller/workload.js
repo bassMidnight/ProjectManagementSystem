@@ -158,11 +158,11 @@ async function DevWorkloadController(req, res) {
         if (!eId) {
             return res.status(400).json({ message: 'eId is required' });
         }
-        const workload = await workloadModel.find({ pId: pId, eId: eId, weekOfYear: currentWeek, updatedAt:{ $gte: new Date(currentYear, 0, 1) } });
-        if (workload.length === 0) {
+        const workload = await workloadModel.findOneAndUpdate({ pId: pId, eId: eId, weekOfYear: currentWeek, updatedAt: { $gte: new Date(currentYear, 0, 1) } }, req.body, { new: true, upsert: true });
+        if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
-        res.status(200).json({ data: workload });
+        res.status(200).json({message:"successfully", data: workload});
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
