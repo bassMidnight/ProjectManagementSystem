@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var controller = require('../controller/employee');
 var employeeController = require('../controller/employee.js');
 var employeeSkillController = require('../controller/employeeSkill.js');
 

@@ -128,6 +128,5 @@ module.exports = {
     CreateEmployee,
     DeleteEmployeeById,
     GetEmployeeAllProject,
-    GetEmployeeSkills,
     GetEmployeeProjectMemberWorkload
 }
