@@ -147,6 +147,30 @@ async function GetlatestProjectWorkload(req, res) {
     }
 }
 
+async function DevWorkloadController(req, res) {
+    const currentWeek = getWeekNumber(new Date());
+    const currentYear = new Date().getFullYear();
+    try {
+        const pId = req.query.pId;
+        if (!pId) {
+            return res.status(400).json({ message: 'pId is required' });
+        }
+        const eId = req.query.eId;
+        if (!eId) {
+            return res.status(400).json({ message: 'eId is required' });
+        }
+        const workload = await workloadModel.find({ pId: pId, eId: eId , weekOfYear: currentWeek, updatedAt: currentYear});
+        if (!workload) {
+            await CreateEmployeeWorkload(req, res);
+        }
+        res.status(200).json({ data: workload });
+        return await UpdateEmployeeWorkload(req, res);
+
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 module.exports = {
     GetEmployeeWorkload,
     CreateEmployeeWorkload,
@@ -155,5 +179,7 @@ module.exports = {
 
     GetlatestWorkload,
     GetAllMembersAndWorkload,
-    GetlatestProjectWorkload
+    GetlatestProjectWorkload,
+
+    DevWorkloadController
 }

@@ -30,4 +30,8 @@ router.get('/latestprojectworkload', async function(req, res) {
     await workloadcontroller.GetlatestProjectWorkload(req, res);
 });
 
+router.get('/history', async function(req, res) {
+    await workloadcontroller.DevWorkloadController(req, res);
+});
+
 module.exports = router;
