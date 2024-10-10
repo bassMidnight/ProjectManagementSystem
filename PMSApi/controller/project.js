@@ -2,134 +2,70 @@ const Employee = require('../models/employee.model'); // Import your Mongoose mo
 const Project = require('../models/project.model'); // Import your Mongoose model for projects
 const ProjectMember = require('../models/projectMember.model'); // Import your Mongoose model for project members
 const employeeModel = require('../models/employee.model');
-
-const { errServerResponse, successDataResponse } = require('../utils/response');
 async function getProjects(req, res) {
     try {
-        console.log("getProjects");
-        
         const projects = await Project.find();
-        const projectmember = await ProjectMember.find();
+        const projectMembers = await ProjectMember.find();
         const employees = await Employee.find();
-        
-        let result = [];
-        for (const project of projects) {
-            
-            let data = {
-                id: project.id,
-                projectName: project.projectName,
-                lead: project.lead,
-            }
-            for (const Member of projectmember) {
-                let dataMember = []
-                if (project.id == Member.pId) {
-                    
-                    let memberData = {
-                        id: Member.id,
-                        eId: Member.eId,
-                        pId: Member.pId,
-                    }
 
-                    let dataEmployee = []
-                    let i = 0
-                    for (const employee of employees) {
-                        if (Member.eId == employee.eId) {
-                            console.log(employee.eId);
-                            console.log(employee.name);
-                            console.log(employee.surname);
-                            
-                            let employeeData = {
-                                eId: employee.eId,
-                                name: employee.name,
-                                surname: employee.surname,
-                            }
-                            dataEmployee.push(employeeData)
-                            i++
-                        }
-                    }
-                    console.log("-------------------------------------");
-                    
-                    // console.log("i = " + i);
-                    
-                    memberData.employee = dataEmployee
-                    dataMember.push(memberData)
+        const result = projects.map(project => ({
+            id: project.id,
+            projectName: project.projectName,
+            lead: project.lead,
+            projectMembers: projectMembers
+                .filter(member => member.pId === project.id)
+                .map(member => ({
+                    id: member.id,
+                    eId: member.eId,
+                    pId: member.pId,
+                    employee: employees.find(employee => employee.eId === member.eId),
+                })),
+        }));
 
-                }
-                data.projectmember = dataMember
-            }
-            result.push(data);
-        }
-        
-        return successDataResponse(result);
+        return res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
-        console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
-async function getProjectByUser(req, res) {
-    const userId = req.query.userId || "";
+async function getProjectsByUser(req, res) {
+    const userId = req.query.userId;
+
+    if (!userId) {
+        return res.status(400).json({ error: true, message: 'userId is required' });
+    }
 
     try {
-        if (!userId) {
-            return res.status(400).json({
-                error: true,
-                message: "userId is required"
-            });
-        }
+        const projectMembers = await ProjectMember.find({ eId: userId });
+        const projects = await Project.find({ id: { $in: projectMembers.map(member => member.pId) } });
 
-        // const userProjects = await Employee.find({ eId: userId });
-        const userMembers = await ProjectMember.find({ eId: userId });
-        const employees = await employeeModel.find({ eId: { $in: userMembers.map(member => member.eId) } });
-
-        return successDataResponse(employees);
+        return res.status(200).json({ error: false, message: 'success', data: projects });
     } catch (error) {
-        console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
 async function getUserByProject(req, res) {
-    const projectId = req.query.pId || "";
+    const projectId = req.query.projectId;
+
+    if (!projectId) {
+        return res.status(400).json({ error: true, message: 'projectId is required' });
+    }
 
     try {
-        if (!projectId) {
-            return badRequest('projectId is required');
-        }
+        const projectMembers = await ProjectMember.find({ pId: projectId });
+        const employeeIds = projectMembers.map(member => member.eId);
+        const employees = await employeeModel.find({ eId: { $in: employeeIds } });
 
-        // const userProjects = await Employee.find({ eId: userId });
-        const userMembers = await ProjectMember.find({ pId: projectId });
-        const employees = await employeeModel.find({ eId: { $in: userMembers.map(member => member.eId) } });
-
-        return {
-            error: false,
-            result: employees
-        };
+        return res.status(200).json({ error: false, message: 'success', data: employees });
     } catch (error) {
-        console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-
-        return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
 // Export the function
 module.exports = {
-    getProjectByUser, 
     getProjects, 
+    getProjectsByUser, 
     getUserByProject
 };

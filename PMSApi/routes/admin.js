@@ -8,6 +8,5 @@ router.get('/',  controller.getProjectOrLead );
 router.get('/historyList', controller.getHistory );
 router.get('/employeeDropdown', controller.getEmployeeDropdown );
 router.get('/projectDropdown', controller.getProjectDropdown );
-// router.get('/memberList', controller.getMenberList );
 
 module.exports = router;

@@ -3,12 +3,12 @@ const projectModel = require("../models/project.model");
 const workloadModel = require("../models/workload.model");
 
 const { getWeekNumber } = require("../utils/getWeekNumber");
+const { getStartEndDateFromYear } = require("../utils/formatDate");
 
 async function getProjectOrLead(req, res) {
     const queryDate = req.query.date;
     const currentDate = queryDate ? new Date(queryDate) : new Date();
     const currentWeek = getWeekNumber(currentDate);
-    // console.log("currentWeek : ", currentWeek);
     const Mode = req.query.Mode || "project";
     const Search = req.query.Search || "";
     try {
@@ -344,6 +344,7 @@ async function getHistory(req, res) {
     let {
         employeeId,
         projectId,
+        date,
         page = 1,
         size = 10
     } = req.query;
@@ -356,6 +357,9 @@ async function getHistory(req, res) {
             ...(employeeId && { eId: employeeId }),
             ...(projectId && { pId: projectId })
         };
+
+        const { startOfYear, endOfYear } = getStartEndDateFromYear(date);
+        filterQuery.createdAt = { $gte: startOfYear, $lte: endOfYear };
 
         const workloads = await workloadModel.aggregate([
             { $match: filterQuery },
@@ -409,69 +413,10 @@ async function getHistory(req, res) {
     }
 }
 
-// async function getMenberList(req, res) {
-
-//     let date = req.query.date;
-
-//     if (!date) {
-//         date = new Date();
-//     }else{
-//         date = new Date(date);
-//     }
-
-//     const startOfYear = new Date(date.getFullYear(), 0, 1);
-//     const endOfYear = new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999);
-//     const currentWeek = getWeekNumber(date);
-
-//     try {
-
-//         let employees = await employeeModel.find({});
-//         let workLoads = await workloadModel.find({ 
-//             weekOfYear: currentWeek,
-//             createdAt: { $gte: startOfYear, $lte: endOfYear },
-//             eId: { $in: employees.map(employee => employee.eId) }
-//         });
-        
-//         // console.log("workLoads : ", workLoads);
-        
-//         let data = [];
-//         for (const employee of employees) {
-//             let totalWorkload = 0;
-            
-//             for (const workload of workLoads) {
-//                 if (workload.eId == employee.eId) {
-//                     console.log("employee.eId : ", employee.eId);
-//                     console.log("workload.workload : ", workload.workload);
-                    
-//                     totalWorkload = workload.workload;
-//                 }
-//             }
-
-//             data.push({
-//                 id: employee.eId,
-//                 name: `${employee.name} ${employee.surname}`,
-//                 position: employee.position,
-//                 department: employee.department,
-//                 totalWorkload: totalWorkload
-//             });
-//         }
-
-//         res.status(200).json({
-//             error: false,
-//             message: "Success",
-//             data,
-//         });
-        
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: true, message: error.message });
-//     }
-// }
 
 module.exports = {
     getProjectOrLead,
     getEmployeeDropdown,
     getProjectDropdown,
     getHistory,
-    // getMenberList
 }

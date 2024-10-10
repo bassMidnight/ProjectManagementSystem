@@ -12,7 +12,7 @@ router.put('/workloadMember', controller.updateWorkLoad ); //
 
 // senior history page
 
-router.get('/employeeDropdown', controller.getEmpDropdown );
+router.get('/employeeDropdown', controller.getEmployeeDropdown );
 router.get('/projectDropdown', controller.getProjectDropdown );
 router.get('/workloadHistory', controller.getWorkLoadHistory );
 router.get('/workloadHistoryDetail', controller.getworkloadHistoryDetail );
