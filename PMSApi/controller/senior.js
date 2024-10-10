@@ -3,17 +3,15 @@ const ProjectMemberModel = require('../models/projectMember.model');
 const EmployeeModel = require('../models/employee.model');
 const WorkloadModel = require('../models/workload.model');
 
-const formarDate = require('../utils/formatDate');
-const weekNumber = require('../utils/getWeekNumber');
-
-const { errServerResponse, successDataResponse, badRequest } = require('../utils/response');
+const formatDate = require('../utils/formatDate');
+const { getWeekNumber, getWeekStartAndEnd} = require('../utils/getWeekNumber');
+const { getStartEndDateFromYear } = require('../utils/formatDate');
 
 async function getProjects(req, res) {
     
     const leadId = req.query.leadId || "";
     let date = req.query.date;
     try {
-        console.log("getProjects");
 
         if (!leadId) {
             throw new Error(`leader id is required`);
@@ -21,15 +19,10 @@ async function getProjects(req, res) {
         
         const currentDate = new Date(date);
         const currentYear = currentDate.getFullYear();
-        let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
-        // console.log(startOfYear, endOfYear);
-
-        let currentWeek = weekNumber.getWeekNumber(currentDate);
-        // console.log("currentWeek : ", currentWeek);
-
+        let { startOfYear, endOfYear } = formatDate.getStartEndDateFromYear(currentYear);
+        let currentWeek = getWeekNumber(currentDate);
         const projects = await ProjectModel.find({lead: leadId});
-        // console.log("projects : ", projects);
-        
+
         let aggregatedWorkloads = await WorkloadModel.aggregate([
             {
                 $match: {
@@ -45,9 +38,7 @@ async function getProjects(req, res) {
                 }
             }
         ]);
-        // console.log(aggregatedWorkloads);
-        
-                  
+
         let result = [];
         for (const project of projects) {
             let data = {
@@ -72,150 +63,188 @@ async function getProjects(req, res) {
         });
     } catch (error) {
         console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        // return errServerResponse("Internal Server Error");
         return res.status(500).json({ error: true, message: error.message });
     }
 }
 
 async function getGraph(req, res) {
-    const projectId = req.query.pId || "";
-    const graphMode = req.query.graphMode || "month";
+    const projectId = req.query.projectId;
+    const graphMode = req.query.graphMode;
+    const date = req.query.date;
+
+    if (!projectId) {
+        return res.status(400).json({ error: true, message: 'Project ID is required' });
+    }
+
+    if (!graphMode) {
+        return res.status(400).json({ error: true, message: 'Graph mode is required' });
+    }
 
     try {
-        if (!projectId) {
-            throw new Error(`project id is required`);
-        }
-        
         let workloads;
-
-        if (graphMode === "month") {
-            const currentDate = new Date();
-            const currentWeek = weekNumber.getWeekNumber(currentDate);
-            // console.log("currentWeek : ", currentWeek); 
-            
-            const currentYear = currentDate.getFullYear();
-            let { startOfYear, endOfYear } = formarDate.getStartEndDateFromYear(currentYear);  
-            workloads = await WorkloadModel.aggregate([
-                {
-                    $match: { 
-                        pId: projectId , // กรองข้อมูลตาม pId ที่ต้องการ
-                        weekOfYear: { $gte: currentWeek - 11 , $lte: currentWeek }, // กรองข้อมูลตาม 12 สัปดาห์ ย้อนหลัง
-                        createdAt: { $gte: startOfYear, $lt: endOfYear }
-                    } 
-                },
-                {
-                    $group: {
-                    _id: "$weekOfYear", // แบ่งข้อมูลตาม weekOfYear
-                    avgWorkload: { $avg: "$workload" } // คำนวณค่าเฉลี่ยของ workload ในแต่ละ weekOfYear
-                    }
-                },
-                {
-                    $sort: { _id: 1 } // เรียงลำดับตาม weekOfYear จากมากไปน้อย
-                }
-            ]);
-        } else if (graphMode === "year") {
-            const twelveMonthsAgo = new Date();
-            twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12); // 12 เดือนย้อนหลัง
-
-            workloads = await WorkloadModel.aggregate([
-                {
-                    $match: {
-                    pId: projectId, // กรองข้อมูลตาม pId ที่ต้องการ
-                    datetime: { $gte: twelveMonthsAgo, $lte: new Date() } // กรองข้อมูล 12 เดือนย้อนหลังจากวันนี้
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                          year: { $year: "$datetime" },
-                          month: { $month: "$datetime" }
-                        },
-                        avgWorkload: { $avg: "$workload" }
-                    }
-                },
-                {
-                    $sort: { _id: 1 } // เรียงลำดับเดือนจากน้อยไปมาก (เก่าสุดไปใหม่สุด)
-                }
-            ]);
+        if (graphMode === 'month') {
+            workloads = await getWorkloadsForGraphMonth(projectId, date);
+        } else if (graphMode === 'year') {
+            workloads = await getGraphYear(projectId, date);
+        } else {
+            res.status(400).json({ error: true, message: 'Invalid graph mode' });
         }
 
-        // return successDataResponse(workloads);
-        res.status(200).json({ error: false, message: "success", data: workloads });
+        res.status(200).json({ error: false, message: 'Success', data: workloads });
     } catch (error) {
         console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        // return errServerResponse("Internal Server Error");
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: 'Internal Server Error' });
     }
+}
+
+async function getWorkloadsForGraphMonth(projectId, date) {
+    const currentDate = date ? new Date(date) : new Date();
+    const currentWeek = getWeekNumber(currentDate);
+    const currentYear = currentDate.getFullYear();
+    const { startOfYear, endOfYear } = getStartEndDateFromYear(currentYear);
+
+    const workloads = await WorkloadModel.aggregate([
+        {
+            $match: {
+                pId: projectId,
+                weekOfYear: { $gte: currentWeek - 11, $lte: currentWeek },
+                createdAt: { $gte: startOfYear, $lt: endOfYear },
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    weekOfYear: "$weekOfYear",
+                    year: { $year: "$createdAt" }, // เพิ่มฟิลด์ year ในการจัดกลุ่ม
+                },
+                avgWorkload: { $avg: "$workload" },
+            },
+        },
+        {
+            $sort: { "_id.weekOfYear": 1 }, // จัดเรียงตาม weekOfYear
+        },
+        {
+            $project: {
+                weekOfYear: "$_id.weekOfYear", // นำ weekOfYear ออกมาแสดง
+                year: "$_id.year", // นำ year ออกมาแสดง
+                avgWorkload: 1, // แสดง avgWorkload
+            },
+        },
+    ]);
+    
+    const result = workloads.map((workload) => ({
+        name: `${getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).startDate} - ${getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).endDate}`,
+        avgWorkload: workload.avgWorkload.toFixed(2),
+    }));
+
+    return result;
+}
+
+async function getGraphYear(projectId, date) {
+    let currentDate
+    if (!date) {
+        currentDate = new Date();
+    } else {
+        currentDate = new Date(date);
+    }
+
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(currentDate.getFullYear() - 1); // วันที่ย้อนหลัง 12 เดือน
+
+    const workloadsByMonth = await WorkloadModel.aggregate([
+        {
+            $match: {
+                pId: projectId,
+                createdAt: {
+                    $gte: oneYearAgo,
+                    $lte: currentDate
+                }
+            }
+        },
+        {
+            $addFields: {
+                month: { $month: "$createdAt" }, // ดึงเดือนจาก createdAt
+                year: { $year: "$createdAt" } // ดึงปีจาก createdAt
+            }
+        },
+        {
+            $group: {
+                _id: { year: "$year", month: "$month" }, // กลุ่มตามปีและเดือน
+                avgWorkload: { $avg: "$workload" } // ค่าเฉลี่ยของ workload ในแต่ละเดือน
+            }
+        },
+        {
+            $sort: { "_id.year": 1, "_id.month": 1 } // เรียงจากเดือนปัจจุบันไปย้อนหลัง
+        },
+        {
+            $limit: 12 // จำกัดจำนวนข้อมูลย้อนหลัง 12 เดือน
+        }
+    ]);
+
+    // console.log(workloadsByMonth);
+
+    let result = workloadsByMonth.map((workload) => ({
+        name: `${workload._id.month}-${workload._id.year}`,
+        avgWorkload: workload.avgWorkload.toFixed(2),
+    }));
+
+    return result;
 }
 
 async function getProjectMenberList(req, res) {
     const projectId = req.query.pId || "";
-
+    const date = req.query.date || "";
     try {
         if (!projectId) {
             throw new Error(`project id is required`);
         }
 
-        const currentDate = new Date();
-        const currentWeek = weekNumber.getWeekNumber(currentDate);
-        
+        let currentDate
+        if (!date) {
+            currentDate = new Date();
+        } else {
+            currentDate = new Date(date);
+        }
+
+        const currentWeek = getWeekNumber(currentDate);
         const members = await ProjectMemberModel.find({ pId: projectId });
         const employees = await EmployeeModel.find({ eId: { $in: members.map(member => member.eId) } });
-        // console.log("employees : ", employees.map(employee => employee.eId));
+        const { startOfYear, endOfYear } = getStartEndDateFromYear(currentDate.getFullYear());
         
         const workloads = await WorkloadModel.find({ 
             weekOfYear: currentWeek,
-            eId: { $in: employees.map(employee => employee.eId) } // กรอง workload.eId ที่ตรงกับ employees.eId
+            eId: { $in: employees.map(employee => employee.eId) }, // กรอง workload.eId ที่ตรงกับ employees.eId
+            createdAt: {
+                $gte: startOfYear,
+                $lte: endOfYear
+            }
         });
 
         // console.log("workloads : ", workloads);
         
-        let result = [];
-        for (const employee of employees) {
-            let data = {
+        const result = employees.map(employee => {
+            const workload = workloads.find(workload => workload.eId === employee.eId);
+            return {
                 id: employee.eId,
                 name: employee.name,
                 surname: employee.surname,
                 position: employee.position,
                 department: employee.department,
-                workload: 0,
-            }
-            // for (const workload of workloads) {
-            //     if(workload.eId == employee.eId) {
-            //         data.workload = workload.workload;
-            //     }
-            // }
-            for (let i = workloads.length - 1; i >= 0; i--) { // วนลูปย้อนกลับ
-                if (workloads[i].eId == employee.eId) {
-                    data.workload = workloads[i].workload;
-                    workloads.splice(i, 1); // ลบค่าในตำแหน่งปัจจุบันออกจาก array
-                }
-            }
-            
+                workload: workload ? workload.workload.toFixed(2) : `0.00`,
+            };
+        });
 
+<<<<<<< HEAD
             result.push(data);
         }
 
         // return successDataResponse(result);
         res.status(200).json({ error: false, message: "success", data: result });
+=======
+        return res.status(200).json({ error: false, message: "success", data: result });
+>>>>>>> 8b34b22c9f8697dc153e7dfe2814c4540e1a222e
     } catch (error) {
         console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        // return errServerResponse("Internal Server Error");
         return res.status(500).json({ error: true, message: error.message });
     }
 
@@ -226,17 +255,15 @@ async function getWorkLoad(req, res) {
 
     try {
         if (!eId) {
-            // return badRequest('employee id is required');
             throw new Error('employee id is required');
         }
 
         if (!pId) {
-            // return badRequest('project id is required');
             throw new Error('project id is required');
         }
 
         const currentDate = new Date();
-        const currentWeek = weekNumber.getWeekNumber(currentDate);
+        const currentWeek = getWeekNumber(currentDate);
         const workloads = await WorkloadModel.find(
             { 
                 eId: eId,
@@ -245,25 +272,15 @@ async function getWorkLoad(req, res) {
             }
         );
 
-
-        // return successDataResponse(workloads);
         return res.status(200).json({ error: false, message: "success", data: workloads });
     } catch (error) {
-        console.error(error);
-
-        // return res.status(500).json({
-        //     error: true,
-        //     message: "Internal Server Error"
-        // });
-        // return errServerResponse("Internal Server Error");
+        console.error(error); 
         return res.status(500).json({ error: true, message: error.message });
     }
 
 }
 
 async function updateWorkLoad(req, res) {
-    // const eId = req.query.eId;
-    // const pId = req.query.pId;
     let {
         eId,
         pId,
@@ -275,14 +292,15 @@ async function updateWorkLoad(req, res) {
     try {
         
         const currentDate = new Date()
-        const currentWeek = weekNumber.getWeekNumber(currentDate);
+        const currentWeek = getWeekNumber(currentDate);
 
-        const insertOrUpdate = await WorkloadModel.updateOne(
+        await WorkloadModel.updateOne(
             { 
                 pId: pId,
                 eId: eId,
-                weekOfYear: currentWeek 
-            }, // เงื่อนไขในการค้นหา
+                weekOfYear: currentWeek,
+                $expr: { $eq: [{ $year: "$createdAt" }, currentYear] }
+            },
             { $set: {
                     eId: eId,
                     pId: pId,
@@ -290,64 +308,38 @@ async function updateWorkLoad(req, res) {
                     desc: desc,
                     notation: notation
                 } 
-            }, // การอัปเดตข้อมูล
-            { upsert: true } // ถ้าไม่พบเอกสาร จะทำการสร้างเอกสารใหม่
+            },
+            { upsert: true }
         );
 
-        // console.log("insertOrUpdate : ", insertOrUpdate);
-        
-        // return successDataResponse({
-        //     message : `insert or update success`
-        // });
         return res.status(200).json({ error: false, message: "insert or update success"});
     } catch (error) {
-        console.error(error);
-        // return errServerResponse("Internal Server Error");
+        console.error(error); 
         return res.status(500).json({ error: true, message: error.message });
     }
 }
 
-async function getEmpDropdown(req, res) {
-    const leadId = req.query.leadId
+async function getEmployeeDropdown(req, res) {
+    const leadId = req.query.leadId;
     try {
-
         if (!leadId) {
-            // return badRequest("lead id requried.")
-            throw new Error("lead id requried.")
+            throw new Error('lead id is required');
         }
 
-        const projects = await ProjectModel.find({
-            lead: leadId
-        })
-        // console.log("projects : ", projects);
-        
+        const projects = await ProjectModel.find({ lead: leadId });
+        const projectIds = projects.map(project => project.id);
+        const projectMembers = await ProjectMemberModel.find({ pId: { $in: projectIds } });
+        const employeeIds = projectMembers.map(member => member.eId);
+        const employees = await EmployeeModel.find({ eId: { $in: employeeIds } });
 
-        const members = await ProjectMemberModel.find(
-            { pId : {$in : projects.map(project => project.id)} }
-        )
-        // console.log("members : ", members);
-        
+        const result = employees.map(employee => ({
+            eId: employee.eId,
+            fullName: `${employee.name} ${employee.surname}`,
+        }));
 
-        const employees = await EmployeeModel.find(
-            { eId : { $in : members.map(member => member.eId)}}
-        )
-        // console.log("employees : ", employees);
-        
-
-        let result = []
-        for (const employee of employees) {
-            let data = {
-                eId : employee.eId,
-                fullName : `${employee.name} ${employee.surname}`,
-            }
-            result.push(data)
-        }
-
-        // return successDataResponse(result);
-        return res.status(200).json({ error: false, message: "success", data: result });
+        return res.status(200).json({ error: false, message: 'success', data: result });
     } catch (error) {
         console.error(error);
-        // return errServerResponse("Internal Server Error");
         return res.status(500).json({ error: true, message: error.message });
     }
 }
@@ -377,12 +369,12 @@ async function getProjectDropdown(req, res) {
         return res.status(200).json({ error: false, message: "success", data: result });
     } catch (error) {
         console.error(error);
-        return errServerResponse("Internal Server Error");
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
 async function getWorkLoadHistory(req, res) {
-    const { leadId, projectId, employeeId } = req.query;
+    const { leadId, projectId, employeeId, date } = req.query;
 
     const page = parseInt(req.query.page) || 1;
     const size = parseInt(req.query.size) || 10;
@@ -390,17 +382,30 @@ async function getWorkLoadHistory(req, res) {
 
     try {
         if (!leadId) {
-            // return badRequest('leadId is required.');
             throw new Error('leader id is required.');
+        }
+
+        if (date) {
+            var dateObj = new Date(date);
+            var currentWeek = getWeekNumber(dateObj);
+            var { startOfYear, endOfYear } = getStartEndDateFromYear(dateObj.getFullYear());
         }
 
         const projects = await ProjectModel.find({ lead: leadId });
         const workloadQuery = { pId: { $in: projects.map(project => project.id) } };
         if (projectId) {
-            workloadQuery.id = projectId;
+            workloadQuery.pId = projectId;
         }
         if (employeeId) {
             workloadQuery.eId = employeeId;
+        }
+
+        if (date) {
+            workloadQuery.createdAt = {
+                $gte: startOfYear,
+                $lte: endOfYear
+            }
+            workloadQuery.weekOfYear = currentWeek
         }
 
         const workloads = await WorkloadModel.find(workloadQuery).skip(offset).limit(size).sort({ createdAt: -1 });
@@ -424,11 +429,6 @@ async function getWorkLoadHistory(req, res) {
                 : '',
         }));
 
-        // return successDataResponse({
-        //     result : result,
-        //     total : result.length,
-        //     totalAll : workloadtotal
-        // });
         return res.status(200).json({ 
             error: false, 
             message: "success", 
@@ -439,9 +439,8 @@ async function getWorkLoadHistory(req, res) {
             } 
         });
     } catch (error) {
-        console.log(error);
-        
-        return errServerResponse("Internal Server Error");
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -450,7 +449,6 @@ async function getworkloadHistoryDetail(req, res) {
 
     try {
         if (!workloadId) {
-            // return badRequest('workload id is required.');
             throw new Error('workload id is required.');
         }
         
@@ -458,10 +456,10 @@ async function getworkloadHistoryDetail(req, res) {
             _id: workloadId
         })
 
-        // return successDataResponse(workload);
         return res.status(200).json({ error: false, message: "success", data: workload });
     } catch (error) {
-        return errServerResponse("Internal Server Error");
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -470,25 +468,21 @@ async function addEmployeeToProject(req, res) {
     const projectId = req.query.pId;
 
     if (!employeeId) {
-        // return badRequest('Employee ID is required.');
         throw new Error('Employee ID is required.');
     }
 
     if (!projectId) {
-        // return badRequest('Project ID is required.');
         throw new Error('Project ID is required.');
     }
 
     try {
         const employee = await EmployeeModel.findOne({ eId: employeeId });
         if (!employee) {
-            // return errServerResponse('Employee not found.');
             throw new Error('Employee not found.');
         }
 
         const project = await ProjectModel.findOne({ id: projectId });
         if (!project) {
-            // return errServerResponse('Project not found.');
             throw new Error('Project not found.');
         }
 
@@ -501,14 +495,10 @@ async function addEmployeeToProject(req, res) {
             return errServerResponse('Failed to add employee to project.');
         }
 
-        // return successDataResponse({
-        //     message: 'Employee added to project successfully.'
-        // });
         return res.status(200).json({ error: false, message: "Employee added to project successfully."});
     } catch (error) {
-        console.log(error);
-        
-        return errServerResponse('Internal Server Error');
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -517,24 +507,22 @@ async function deleteEmployeeFromProject(req, res) {
     const projectId = req.query.pId;
 
     if (!employeeId) {
-        // return badRequest('Employee ID is required.');
         throw new Error('Employee ID is required.');
     }
 
     if (!projectId) {
-        // return badRequest('Project ID is required.');
         throw new Error('Project ID is required.');
     }
 
     try {
         const employee = await EmployeeModel.findOne({ eId: employeeId });
         if (!employee) {
-            return errServerResponse('Employee not found.');
+            throw new Error('Employee not found.');
         }
 
         const project = await ProjectModel.findOne({ id: projectId });
         if (!project) {
-            return errServerResponse('Project not found.');
+            throw new Error('Project not found.');
         }
 
         const deleteResult = await ProjectMemberModel.findOneAndDelete({
@@ -543,15 +531,13 @@ async function deleteEmployeeFromProject(req, res) {
         });
 
         if (!deleteResult) {
-            return errServerResponse('Failed to delete employee from project.');
+            throw new Error('Failed to delete employee from project.');
         }
-
-        // return successDataResponse({
-        //     message: 'Employee deleted from project successfully.'
-        // });
+ 
         return res.status(200).json({ error: false, message: "Employee deleted from project successfully."});
     } catch (error) {
-        return errServerResponse('Internal Server Error');
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
     }
 }
 
@@ -586,11 +572,10 @@ async function getAllEmployee(req, res) {
             eId : employee.eId,
             fullName : `${employee.name} ${employee.surname}`,
         }));
-        
-        // return successDataResponse(result);
+         
         return res.status(200).json({ error: false, message: "success", data: result });
-    } catch (error) {
-        // return errServerResponse('Internal Server Error');
+    } catch (error) { 
+        console.error(error);
         return res.status(500).json({ error: true, message: error.message });
     }
 }
@@ -602,7 +587,7 @@ module.exports = {
     getProjectMenberList,
     getWorkLoad,
     updateWorkLoad,
-    getEmpDropdown,
+    getEmployeeDropdown,
     getProjectDropdown,
     getWorkLoadHistory,
     getworkloadHistoryDetail,

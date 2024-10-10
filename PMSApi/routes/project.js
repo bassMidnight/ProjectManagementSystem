@@ -5,20 +5,11 @@ const controller = require('../controller/project.js');
 const projectSkillController = require('../controller/projectSkill.js');
 
 // Adding a route for /api/
-router.get('/', async function(req, res) {
-    const response = await controller.getProjects(req, res);
-    res.status(200).json(response);
-});
+router.get('/', controller.getProjects);
 
-router.get('/projectByUser', async function(req, res) {
-    const response = await controller.getProjectByUser(req, res);
-    res.status(200).json(response);
-});
+router.get('/projectByUser', controller.getProjectsByUser);
 
-router.get('/userByProject', async function(req, res) {
-    const response = await controller.getUserByProject(req, res);
-    res.status(200).json(response);
-});
+router.get('/userByProject', controller.getUserByProject);
 
 //project skill route
 router.get('/projectskill', async function(req, res) {

@@ -2,6 +2,9 @@ const skillModel = require('../models/skill.model');
 const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetAllSkills(req, res) {
+    if (req.query.sId) {
+        await GetSkillById(req, res);
+    }
     try {
         const skills = await skillModel.find();
         res.send({
@@ -17,12 +20,16 @@ async function GetAllSkills(req, res) {
 async function GetSkillById(req, res, next) {
     const id = req.query.skillID;
     if (!id) {
-        return badRequest('Skill id is required');
+        return res.status(400).json({
+            message: 'Skill id is required'
+        });
     }
     try {
         const skill = await skillModel.find({id: id});
         if (!skill) {
-            return dataNotFound('Skill not found');
+            return res.status(404).json({
+                message: 'Skill not found'
+            });
         }
         res.send({
             status: 200,
@@ -37,7 +44,9 @@ async function GetSkillById(req, res, next) {
 async function CreateSkill (req, res, next) {
     const name = req.body.name;
     if (!name) {
-        return badRequest('Skill name is required');
+        return res.status(400).json({
+            message: 'Skill name is required'
+        })
     }
     try {
         const id = req.body.name.slice(0, 4).toUpperCase()+"001";
@@ -59,12 +68,16 @@ async function CreateSkill (req, res, next) {
 async function UpdateSkillById(req, res, next) {
     const id = req.query.skillID;
     if (!id) {
-        return badRequest('Skill id is required');
+        return res.status(400).json({
+            message: 'Skill id is required'
+        })
     }
     try {
         const skill = await skillModel.findOneAndUpdate({ id: id }, req.body, { new: true });
         if (!skill) {
-            return badRequest('Skill id was required');
+            return res.status(404).json({
+                message: 'Skill not found'
+            })
         }
         res.send({
             status: 200,
@@ -79,12 +92,16 @@ async function UpdateSkillById(req, res, next) {
 async function DeleteSkillById(req, res, next) {
     const id = req.query.skillID;
     if (!id) {
-        return badRequest('Skill id is required');
+        return res.status(400).json({
+            message: 'Skill id is required'
+        })
     }
     try {
         const skill = await skillModel.findOneAndDelete({ id: id});
         if (!skill) {
-            return badRequest('Skill id was required');
+            return res.status(404).json({
+                message: 'Skill not found'
+            })
         }
         res.send({
             status: 200,
