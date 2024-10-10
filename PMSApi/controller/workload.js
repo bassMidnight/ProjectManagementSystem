@@ -115,6 +115,10 @@ async function GetAllMembersAndWorkload(req, res) {
 }
 
 async function GetlatestProjectWorkload(req, res) {
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+    let offset = (page - 1) * size;
+
     try {
         const workloads = await workloadModel.aggregate([
             {
@@ -125,9 +129,19 @@ async function GetlatestProjectWorkload(req, res) {
             },
             {
                 $replaceRoot: { newRoot: "$latestWorkload" }
-            }
+            },
+            { $skip: offset },
+            { $limit: size }
         ]);
-        return res.status(200).json({ data: workloads });
+        const total = await workloadModel.aggregate([
+            {
+                $group: {
+                    _id: "$pId"
+                }
+            },
+            { $count: "total" }
+        ]);
+        return res.status(200).json({ data: workloads, total: total[0] ? total[0].total : 0 });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
