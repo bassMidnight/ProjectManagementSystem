@@ -1,6 +1,6 @@
 const projectSkillModel = require('../models/projectSkill.model');
 
-async function GetProjectSkills(req, res, next) {
+async function GetProjectSkills(req, res) {
     const pId = req.query.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
@@ -39,11 +39,11 @@ async function GetProjectSkills(req, res, next) {
             data: projectskills,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
-async function AddProjectSkill(req, res, next) {
+async function AddProjectSkill(req, res) {
     const pId = req.query.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
@@ -63,11 +63,11 @@ async function AddProjectSkill(req, res, next) {
             data: projectSkill
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
-async function RemoveProjectSkill(req, res, next) {
+async function RemoveProjectSkill(req, res) {
     const pId = req.query.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
@@ -87,7 +87,7 @@ async function RemoveProjectSkill(req, res, next) {
             data: projectSkill
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
