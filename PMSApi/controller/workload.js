@@ -31,7 +31,7 @@ async function CreateEmployeeWorkload(req, res) {
             workload: req.body.workload,
             desc: req.body.desc,
             notation: req.body.notation,
-            weekOfYear: currentWeek
+            weekOfYear: currentWeek || req.body.weekOfYear
         });
         return res.status(200).json({message:"created successfully", data: workload});
     } catch (err) {
@@ -40,11 +40,11 @@ async function CreateEmployeeWorkload(req, res) {
 }
 
 async function UpdateEmployeeWorkload(req, res) {
-    const eId = req.query.eId;
+    const eId = req.query.eId || req.body.eId;
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
     }
-    const pId = req.query.pId;
+    const pId = req.query.pId || req.body.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
     }
@@ -105,7 +105,6 @@ async function GetAllMembersAndWorkload(req, res) {
         if (!pId) {
             return res.status(400).json({ message: 'pId is required' });
         }
-        const currentWeek = getWeekNumber(new Date());
         const workloads = await workloadModel.find({ pId: pId }).sort({ updatedAt: -1 });
         return res.status(200).json({ data: workloads });
     } catch (err) {
