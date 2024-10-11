@@ -1,5 +1,4 @@
 const skillModel = require('../models/skill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetAllSkills(req, res) {
     if (req.query.sId) {
@@ -49,7 +48,7 @@ async function CreateSkill (req, res, next) {
         })
     }
     try {
-        const id = req.body.name.slice(0, 4).toUpperCase()+"001";
+        const id = req.body.name.slice(0, 4).toLowerCase()+"001";
         const skill = await skillModel.create({
             id: id,
             name: name,
@@ -60,13 +59,15 @@ async function CreateSkill (req, res, next) {
             message: "success",
             data: skill,
         });
-    } catch (error) {
-        next(error);
+    } catch (err) {
+        res.status(500).json({
+            message: err.message
+        })
     }
 }
 
 async function UpdateSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'
@@ -90,7 +91,7 @@ async function UpdateSkillById(req, res, next) {
 }
 
 async function DeleteSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'

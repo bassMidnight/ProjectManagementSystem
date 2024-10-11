@@ -1,7 +1,4 @@
 const employeeModel = require("../models/employee.model");
-const { dataNotFound } = require("../utils/response");
-const employeeSkillModel = require("../models/EmployeeSkill.model");
-const projectModel = require("../models/project.model");
 const {weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId} = require("../utils/weeklyQuery");
 const {getWeekNumber} = require("../utils/getWeekNumber");
 
