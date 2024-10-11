@@ -2,7 +2,7 @@ const skillModel = require('../models/skill.model');
 
 async function GetAllSkills(req, res) {
     if (req.query.sId) {
-        await GetSkillById(req, res);
+        return GetSkillById(req, res);
     }
     try {
         const skills = await skillModel.find();
@@ -12,12 +12,12 @@ async function GetAllSkills(req, res) {
             data: skills,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
 async function GetSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'
@@ -36,7 +36,7 @@ async function GetSkillById(req, res, next) {
             data: skill,
         });
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -86,7 +86,7 @@ async function UpdateSkillById(req, res, next) {
             data: skill,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -109,7 +109,7 @@ async function DeleteSkillById(req, res, next) {
             message: "success",
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 

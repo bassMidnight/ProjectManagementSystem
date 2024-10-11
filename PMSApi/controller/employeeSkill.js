@@ -41,7 +41,7 @@ async function GetEmployeeSkills (req, res, next) {
             data: employeeSkills,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -70,7 +70,7 @@ async function AddEmployeeSkill (req, res, next) {
             data: employeeSkill,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -100,7 +100,7 @@ async function RemoveEmployeeSkill(req, res, next) {
             data: employeeSkill,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
