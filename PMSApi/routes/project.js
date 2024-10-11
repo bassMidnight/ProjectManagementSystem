@@ -13,18 +13,15 @@ router.get('/userByProject', controller.getUserByProject);
 
 //project skill route
 router.get('/projectskill', async function(req, res) {
-    const response = await projectSkillController.GetProjectSkills(req, res);
-    res.status(200).json(response);
+    await projectSkillController.GetProjectSkills(req, res);
 });
 
 router.post('/projectskill', async function(req, res) {
-    const response = await projectSkillController.AddProjectSkill(req, res);
-    res.status(200).json(response);
+    await projectSkillController.AddProjectSkill(req, res);
 });
 
 router.delete('/projectskill', async function(req, res) {
-    const response = await projectSkillController.RemoveProjectSkill(req, res);
-    res.status(200).json(response);
+    await projectSkillController.RemoveProjectSkill(req, res);
 });
 
 module.exports = router;
