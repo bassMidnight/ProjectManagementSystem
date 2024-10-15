@@ -93,18 +93,9 @@ async function GetlatestWorkload(req, res) {
     try {
         const workload = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
         if (!workload) {
-            await workloadModel.create({
-                pId: pId,
-                eId: eId,
-                workload: 0,
-                weekOfYear: currentWeek,
-                desc: '',
-                notation: '',
-                updatedAt: new Date()
-            });
+            return res.status(200).json({ data: null });
         }
-        const result = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
-        return res.status(200).json({ data: result });
+        return res.status(200).json({ data: workload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
