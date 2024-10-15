@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// สร้าง Schema สำหรับ Skill
 const skillSchema = new mongoose.Schema({
     id: String,
     name: String,

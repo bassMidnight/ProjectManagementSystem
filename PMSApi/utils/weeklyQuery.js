@@ -1,7 +1,7 @@
 const Workload = require('../models/workload.model');
 const Project = require('../models/project.model');
 const ProjectMember = require('../models/projectMember.model');
-
+const Employee = require('../models/employee.model');
 
 async function weeklyMemberQueryByWeek(lead, weekOfYear, year) {
     const matchCondition = year
@@ -80,6 +80,58 @@ async function weeklyMemberQueryByWeek(lead, weekOfYear, year) {
     ]);
     return members;
 }
+
+async function weeklyMemberQueryByWeekWithoutLead(weekOfYear, year) {
+    const matchCondition = year
+        ? {
+            $and: [
+                { $eq: ["$weekOfYear", weekOfYear] },
+                { $eq: [{ $year: "$createdAt" }, year] }
+            ]
+        }
+        : { $eq: ["$weekOfYear", weekOfYear] };
+
+    const members = await Employee.aggregate([
+        {
+            $lookup: {
+                from: "workloads",
+                let: { eId: "$eId" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$eId", "$$eId"] },
+                                    matchCondition
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: "workload"
+            }
+        },
+        {
+            $project: {
+                _id: "$eId",
+                employeeName: "$name",
+                employeeSurname: "$surname",
+                employeeShortName: "$shortname",
+                employeePosition: "$position",
+                employeeStartDate: "$startDate",
+                workload: {
+                    $cond: [
+                        { $eq: [{ $size: "$workload" }, 0] },
+                        0,
+                        { $sum: "$workload.workload" }
+                    ]
+                }
+            }
+        }
+    ]);
+    return members;
+}
+
 
 async function weeklyMemberQueryByWeekByNameOrProject(lead, weekOfYear, year, projectName, name) {
     try {
@@ -604,6 +656,7 @@ module.exports = {
     weeklyQueryByEIds,
     weeklyQueryWorkloadByPIds,
     weeklyMemberQueryByWeek,
+    weeklyMemberQueryByWeekWithoutLead,
     weeklyMemberProjectQueryByWeek,
     weeklyMemberProjectQueryByWeeks,
     MemberWorkloadOverview,
