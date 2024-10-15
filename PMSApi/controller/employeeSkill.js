@@ -1,4 +1,5 @@
 const EmployeeSkillModel = require('../models/EmployeeSkill.model');
+const skillModel = require('../models/skill.model');
 const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetEmployeeSkills (req, res, next) {
@@ -61,6 +62,16 @@ async function AddEmployeeSkill (req, res, next) {
         })
     }
     try {
+        const checkSkill = await skillModel.findOne({ id: sId });
+        if (!checkSkill) {
+            return res.status(404).json({ message: 'skill not found' });
+        }
+
+        const checkSkillEmployee = await EmployeeSkillModel.findOne({ eId: eId, sId: sId });
+        if (checkSkillEmployee) {
+            return res.status(400).json({ message: 'employee skill already exists' });
+        }
+
         const employeeSkill = await EmployeeSkillModel.create({
             eId: eId,
             sId: sId

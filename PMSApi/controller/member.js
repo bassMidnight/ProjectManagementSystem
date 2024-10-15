@@ -1,8 +1,11 @@
 const ProjectMember = require("../models/projectMember.model")
 const Project = require("../models/project.model")
-const Employee = require("../models/employee.model") // Assuming you have this model
-const { getWeekNumber } = require("../utils/getWeekNumber")
+const Employee = require("../models/employee.model")
+const EmployeeSkillModel = require('../models/EmployeeSkill.model');
+const Skill = require("../models/skill.model")
 const Workload = require("../models/workload.model")
+
+const { getWeekNumber } = require("../utils/getWeekNumber")
 const { weeklyQueryByEId, weeklyQueryByEIds, 
         weeklyQueryWorkloadByPIds, weeklyQueryByEIdAndPId,
         weeklyMemberQueryByWeek, weeklyMemberProjectQueryByWeek,
@@ -243,6 +246,55 @@ async function getAllMembersAndWorkload(req, res) {
     }
 }
 
+async function getProfile(req, res) {
+    const employeeId = req.query.employeeId;
+    if (!employeeId) {
+        console.log("Employee id is required");
+        return res.status(400).json({ error: true, message: "No employee id provided" });
+    }
+
+    try {
+        
+        const users = await Employee.find({
+            eId : employeeId
+        });
+        const skillEmployee = await EmployeeSkillModel.find({
+            eId : {$in: users.map(users => users.eId)}
+        })
+        const skills = await Skill.find({
+            id : {$in: skillEmployee.map(skillEmployee => skillEmployee.sId)}
+        })
+
+        let result = {}
+        for (const user of users) {
+            result.eId = user.eId
+            result.name = user.name
+            result.surname = user.surname
+            result.shortname = user.shortname
+            result.branch = user.branch
+            result.position = user.position
+            result.department = user.department
+        }
+
+        let skilldata = []
+        for (const skill of skills) {
+            let data = {
+                id: skill.id,
+                name: skill.name,
+                description: skill.description
+            }
+            skilldata.push(data)
+        }
+
+        result.skill = skilldata
+
+        return res.status(200).json({ error: false, data: result });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
+    }
+}
 
 // Helper function to get the week number
 
@@ -255,5 +307,6 @@ module.exports = {
     GetEmployeesCurrentWeeklyWorkload,
     GetMemberWorkloadOverview,
     GetMemberWorkloadOverviewMonthly,
-    GetAllMembersByNameOrProject
+    GetAllMembersByNameOrProject,
+    getProfile
 }

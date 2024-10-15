@@ -42,4 +42,8 @@ router.post('/currentworkload', async function(req, res){
     await controller.GetEmployeesCurrentWeeklyWorkload(req, res);
 });
 
+//--------------------------------------------------------------------------------//
+
+router.get('/profile', controller.getProfile );
+
 module.exports = router;

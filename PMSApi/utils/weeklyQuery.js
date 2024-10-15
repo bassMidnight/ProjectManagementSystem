@@ -245,7 +245,8 @@ async function weeklyMemberProjectQueryByWeek(eId, weekOfYear, year) {
                 projectName: "$projectDetails.projectName",
                 lead: "$projectDetails.lead",
                 numberOfMembers: 1,
-                totalWorkload: 1
+                totalWorkload: 1,
+                projectId : "$projectDetails.id"
             }
         }
     ]);
