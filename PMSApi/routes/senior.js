@@ -23,4 +23,9 @@ router.get('/allEmployee', controller.getAllEmployee );
 router.post('/employeeProject', controller.addEmployeeToProject );
 router.delete('/employeeProject', controller.deleteEmployeeFromProject );
 
+// add - remove employee from project list
+
+router.post('/employeeListProject', controller.addEmployeesListToProject );
+router.delete('/employeeListProject', controller.deleteEmployeesListFromProject );
+
 module.exports = router;
