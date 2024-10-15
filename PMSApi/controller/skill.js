@@ -74,7 +74,16 @@ async function UpdateSkillById(req, res, next) {
         })
     }
     try {
-        const skill = await skillModel.findOneAndUpdate({ id: id }, req.body, { new: true });
+        const data = {
+            "name": req.body.name,
+            "description": req.body.description||""
+        }
+        if (!data.name.trim()) {
+            return res.status(400).json({
+                message: 'Skill name is required'
+            })
+        }
+        const skill = await skillModel.findOneAndUpdate({ id: id }, data, { new: true });
         if (!skill) {
             return res.status(404).json({
                 message: 'Skill not found'
