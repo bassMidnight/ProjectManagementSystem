@@ -1,10 +1,9 @@
 const projectSkillModel = require('../models/projectSkill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
 
-async function GetProjectSkills(req, res, next) {
+async function GetProjectSkills(req, res) {
     const pId = req.query.pId;
     if (!pId) {
-        return badRequest('project id is required');
+        return res.status(400).json({ message: 'pId is required' });
     }
     try {
         const projectskills = await projectSkillModel.aggregate([
@@ -40,18 +39,18 @@ async function GetProjectSkills(req, res, next) {
             data: projectskills,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
-async function AddProjectSkill(req, res, next) {
+async function AddProjectSkill(req, res) {
     const pId = req.query.pId;
     if (!pId) {
-        return badRequest('project id is required');
+        return res.status(400).json({ message: 'pId is required' });
     }
     const sId = req.query.sId;
     if (!sId) {
-        return badRequest('skill id is required');
+        return res.status(400).json({ message: 'sId is required' });
     }
     try {
         const projectSkill = await projectSkillModel.create({
@@ -64,23 +63,23 @@ async function AddProjectSkill(req, res, next) {
             data: projectSkill
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
-async function RemoveProjectSkill(req, res, next) {
+async function RemoveProjectSkill(req, res) {
     const pId = req.query.pId;
     if (!pId) {
-        return badRequest('project id is required');
+        return res.status(400).json({ message: 'pId is required' });
     }
     const sId = req.query.sId;
     if (!sId) {
-        return badRequest('skill id is required');
+        return res.status(400).json({ message: 'sId is required' });
     }
     try {
         const projectSkill = await projectSkillModel.findOneAndDelete({ pId: pId, sId: sId });
         if (!projectSkill) {
-            return dataNotFound('project skill not found');
+            return res.status(404).json({ message: 'project skill not found' });
         }
         res.send({
             status: 200,
@@ -88,7 +87,7 @@ async function RemoveProjectSkill(req, res, next) {
             data: projectSkill
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 

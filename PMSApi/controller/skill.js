@@ -1,9 +1,8 @@
 const skillModel = require('../models/skill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
 
 async function GetAllSkills(req, res) {
     if (req.query.sId) {
-        await GetSkillById(req, res);
+        return GetSkillById(req, res);
     }
     try {
         const skills = await skillModel.find();
@@ -13,12 +12,12 @@ async function GetAllSkills(req, res) {
             data: skills,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
 async function GetSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'
@@ -37,7 +36,7 @@ async function GetSkillById(req, res, next) {
             data: skill,
         });
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -49,7 +48,7 @@ async function CreateSkill (req, res, next) {
         })
     }
     try {
-        const id = req.body.name.slice(0, 4).toUpperCase()+"001";
+        const id = req.body.name.slice(0, 4).toLowerCase()+"001";
         const skill = await skillModel.create({
             id: id,
             name: name,
@@ -60,20 +59,31 @@ async function CreateSkill (req, res, next) {
             message: "success",
             data: skill,
         });
-    } catch (error) {
-        next(error);
+    } catch (err) {
+        res.status(500).json({
+            message: err.message
+        })
     }
 }
 
 async function UpdateSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'
         })
     }
     try {
-        const skill = await skillModel.findOneAndUpdate({ id: id }, req.body, { new: true });
+        const data = {
+            "name": req.body.name,
+            "description": req.body.description||""
+        }
+        if (!data.name.trim()) {
+            return res.status(400).json({
+                message: 'Skill name is required'
+            })
+        }
+        const skill = await skillModel.findOneAndUpdate({ id: id }, data, { new: true });
         if (!skill) {
             return res.status(404).json({
                 message: 'Skill not found'
@@ -85,12 +95,12 @@ async function UpdateSkillById(req, res, next) {
             data: skill,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
 async function DeleteSkillById(req, res, next) {
-    const id = req.query.skillID;
+    const id = req.query.sId;
     if (!id) {
         return res.status(400).json({
             message: 'Skill id is required'
@@ -108,7 +118,7 @@ async function DeleteSkillById(req, res, next) {
             message: "success",
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 

@@ -29,7 +29,7 @@ router.post('/skills', async function(req, res) {
     await employeeSkillController.AddEmployeeSkill(req, res);
 });
 router.delete('/skills', async function(req, res) {
-    await employeeSkillController.DeleteEmployeeSkill(req, res);
+    await employeeSkillController.RemoveEmployeeSkill(req, res);
 });
 
 router.get('/workload', async function(req, res) {

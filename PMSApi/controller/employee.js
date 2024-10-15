@@ -1,7 +1,4 @@
 const employeeModel = require("../models/employee.model");
-const { dataNotFound } = require("../utils/response");
-const employeeSkillModel = require("../models/EmployeeSkill.model");
-const projectModel = require("../models/project.model");
 const {weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId} = require("../utils/weeklyQuery");
 const {getWeekNumber} = require("../utils/getWeekNumber");
 
@@ -17,7 +14,7 @@ async function GetEmployees (req, res, next) {
             data: employees,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -34,7 +31,7 @@ async function GetEmployeeById (req, res, next) {
             data: employee,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -47,7 +44,7 @@ async function CreateEmployee (req, res, next) {
             data: employee,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -64,7 +61,7 @@ async function UpdateEmployeeById (req, res, next) {
             data: employee,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -82,7 +79,7 @@ async function DeleteEmployeeById (req, res, next) {
             data: employee,
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -106,7 +103,7 @@ async function GetEmployeeAllProject(req, res, next) {
             data: [projects],
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -129,7 +126,7 @@ async function GetEmployeeProjectMemberWorkload(req, res, next) {
             data: [projects],
         });
     } catch (error) {
-        next(error);
+        return res.status(500).json({ message: error.message });
     }
 }
 

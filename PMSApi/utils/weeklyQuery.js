@@ -225,6 +225,7 @@ async function weeklyMemberProjectQueryByWeek(eId, weekOfYear, year) {
                             $expr: {
                                 $and: [
                                     { $eq: ["$pId", "$$projectId"] },
+                                    { $eq: ["$eId", eId] },
                                     matchCondition
                                 ]
                             }

@@ -87,13 +87,13 @@ async function getGraph(req, res) {
         } else if (graphMode === 'year') {
             workloads = await getGraphYear(projectId, date);
         } else {
-            res.status(400).json({ error: true, message: 'Invalid graph mode' });
+            return res.status(400).json({ error: true, message: 'Invalid graph mode' });
         }
 
-        res.status(200).json({ error: false, message: 'Success', data: workloads });
+        return res.status(200).json({ error: false, message: 'Success', data: workloads });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: true, message: 'Internal Server Error' });
+        return res.status(500).json({ error: true, message: 'Internal Server Error' });
     }
 }
 

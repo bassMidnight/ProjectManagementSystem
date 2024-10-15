@@ -31,7 +31,7 @@ async function CreateEmployeeWorkload(req, res) {
             workload: req.body.workload,
             desc: req.body.desc,
             notation: req.body.notation,
-            weekOfYear: currentWeek
+            weekOfYear: currentWeek || req.body.weekOfYear
         });
         return res.status(200).json({message:"created successfully", data: workload});
     } catch (err) {
@@ -40,11 +40,11 @@ async function CreateEmployeeWorkload(req, res) {
 }
 
 async function UpdateEmployeeWorkload(req, res) {
-    const eId = req.query.eId;
+    const eId = req.query.eId || req.body.eId;
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
     }
-    const pId = req.query.pId;
+    const pId = req.query.pId || req.body.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
     }
@@ -80,6 +80,8 @@ async function DeleteEmployeeWorkload(req, res) {
 }
 
 async function GetlatestWorkload(req, res) {
+    const currentWeek = getWeekNumber(new Date());
+    const currentYear = new Date().getFullYear();
     const eId = req.query.eId;
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
@@ -89,11 +91,20 @@ async function GetlatestWorkload(req, res) {
         return res.status(400).json({ message: 'pId is required' });
     }
     try {
-        const workload = await workloadModel.find({eId: eId, pId: pId }).sort({ updatedAt: -1 }).limit(1);
+        const workload = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
         if (!workload) {
-            return res.status(404).json({ message: 'workload not found' });
+            await workloadModel.create({
+                pId: pId,
+                eId: eId,
+                workload: 0,
+                weekOfYear: currentWeek,
+                desc: '',
+                notation: '',
+                updatedAt: new Date()
+            });
         }
-        return res.status(200).json({ data: workload });
+        const result = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
+        return res.status(200).json({ data: result });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -105,7 +116,6 @@ async function GetAllMembersAndWorkload(req, res) {
         if (!pId) {
             return res.status(400).json({ message: 'pId is required' });
         }
-        const currentWeek = getWeekNumber(new Date());
         const workloads = await workloadModel.find({ pId: pId }).sort({ updatedAt: -1 });
         return res.status(200).json({ data: workloads });
     } catch (err) {
@@ -158,11 +168,28 @@ async function DevWorkloadController(req, res) {
         if (!eId) {
             return res.status(400).json({ message: 'eId is required' });
         }
-        const workload = await workloadModel.findOneAndUpdate({ pId: pId, eId: eId, weekOfYear: currentWeek, updatedAt: { $gte: new Date(currentYear, 0, 1) } }, req.body, { new: true, upsert: true });
+        const workload = await workloadModel.findOne({ eId: eId, pId: pId }, { weekOfYear: currentWeek, year: currentYear });
         if (!workload) {
-            return res.status(404).json({ message: 'workload not found' });
+            let newworkload = await workloadModel.create({
+                pId: pId,
+                eId: eId,
+                weekOfYear: currentWeek,
+                year: currentYear,
+                workload: 0,
+                desc: '',
+                notation: ''
+            })
+            return res.status(200).json({ message: 'workload created successfully', data: newworkload });
+        } else {
+            let newworkload = await workloadModel.findOneAndUpdate({ eId: eId, pId: pId }, {
+                $set: {
+                    workload: req.body.workload,
+                    desc: req.body.desc,
+                    notation: req.body.notation
+                }
+            }, { new: true })
+            return res.status(200).json({ message: 'workload updated successfully',data: newworkload });
         }
-        res.status(200).json({message:"successfully", data: workload});
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

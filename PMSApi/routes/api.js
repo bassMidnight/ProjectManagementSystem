@@ -16,7 +16,7 @@ router.get('/readfile', async function(req, res, next) {
         console.log(data);
         res.send(data);
     } catch (error) {
-        next(error); // Forward error to the error handler
+        return res.status(500).json({ message: error.message }); // Forward error to the error handler
     }
 });
 
@@ -39,7 +39,7 @@ router.get('/lead/:leadId', async function(req, res, next) {
         data: employees,
       });
     } catch (error) {
-      next(error);
+      return res.status(500).json({ message: error.message });
     }
   });
   
