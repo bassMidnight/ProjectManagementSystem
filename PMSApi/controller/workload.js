@@ -80,6 +80,8 @@ async function DeleteEmployeeWorkload(req, res) {
 }
 
 async function GetlatestWorkload(req, res) {
+    const currentWeek = getWeekNumber(new Date());
+    const currentYear = new Date().getFullYear();
     const eId = req.query.eId;
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
@@ -89,9 +91,18 @@ async function GetlatestWorkload(req, res) {
         return res.status(400).json({ message: 'pId is required' });
     }
     try {
-        const workload = await workloadModel.find({eId: eId, pId: pId }).sort({ updatedAt: -1 }).limit(1);
+        const workload = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
         if (!workload) {
-            return res.status(404).json({ message: 'workload not found' });
+            await workloadModel.create({
+                pId: pId,
+                eId: eId,
+                workload: 0,
+                weekOfYear: currentWeek,
+                desc: '',
+                notation: '',
+                updatedAt: new Date()
+            })
+            return res.status(200).json({ message: 'workload created' });
         }
         return res.status(200).json({ data: workload });
     } catch (err) {
