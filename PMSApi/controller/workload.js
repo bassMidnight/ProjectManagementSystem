@@ -101,10 +101,10 @@ async function GetlatestWorkload(req, res) {
                 desc: '',
                 notation: '',
                 updatedAt: new Date()
-            })
-            return res.status(200).json({ message: 'workload created' });
+            });
         }
-        return res.status(200).json({ data: workload });
+        const result = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
+        return res.status(200).json({ data: result });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
