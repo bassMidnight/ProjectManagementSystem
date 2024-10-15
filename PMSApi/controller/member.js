@@ -8,16 +8,22 @@ const { weeklyQueryByEId, weeklyQueryByEIds,
         weeklyMemberQueryByWeek, weeklyMemberProjectQueryByWeek,
         weeklyMemberProjectQueryByWeeks, MemberWorkloadOverview,
         MemberWorkloadOverviewMonthly, MemberWorkloadOverviewTwelveMonths,
-        weeklyMemberQueryByWeekByNameOrProject
+        weeklyMemberQueryByWeekByNameOrProject, weeklyMemberQueryByWeekWithoutLead
     } = require("../utils/weeklyQuery")
 
 async function GetAllMembers(req, res) {
     try {
         let lead = req.query.lead;
         let date = req.query.date;
+        let members = [];
         let currentWeek = getWeekNumber(date ? new Date(date) : new Date());
-        const members = await weeklyMemberQueryByWeek(lead,currentWeek,date ? new Date(date).getFullYear() : new Date().getFullYear());
-
+        if (!lead){
+            members = await weeklyMemberQueryByWeekWithoutLead(currentWeek,date ? new Date(date).getFullYear() : new Date().getFullYear());
+        
+        }
+        else{
+            members = await weeklyMemberQueryByWeek(lead,currentWeek,date ? new Date(date).getFullYear() : new Date().getFullYear());
+        }
         res.status(200).json({
             status: "200",
             message: "success",
