@@ -628,6 +628,9 @@ async function deleteEmployeesListFromProject(req, res) {
     const employeeIds = req.body.eIds;  // Expecting a list of employee IDs in the request body
     const projectId = req.body.pId;
 
+    console.log(employeeIds);
+    console.log(projectId);
+
     if (!employeeIds || employeeIds.length === 0) {
         return res.status(400).json({ error: true, message: 'Employee IDs are required.' });
     }
