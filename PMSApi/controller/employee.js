@@ -7,7 +7,7 @@ async function GetEmployees (req, res, next) {
         return GetEmployeeById(req, res, next);
     }
     try {
-        const employees = await employeeModel.find();
+        const employees = await employeeModel.find().lean();
         res.send({
             status: 200,
             message: "success",
