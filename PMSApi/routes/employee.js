@@ -8,9 +8,6 @@ var employeeSkillController = require('../controller/employeeSkill.js');
 router.get('/', async function(req, res) {
     await employeeController.GetEmployees(req, res);
 });
-router.get('/', async function(req, res) {
-    await employeeController.GetEmployeeById(req, res);
-});
 router.post('/', async function(req, res) {
     await employeeController.CreateEmployee(req, res);
 });
