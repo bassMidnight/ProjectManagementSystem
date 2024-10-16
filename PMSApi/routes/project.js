@@ -9,6 +9,10 @@ router.get('/', controller.getProjects);
 
 router.post('/', controller.CreateProject);
 
+router.put('/', controller.UpdateProject);
+
+router.delete('/', controller.DeleteProject);
+
 router.get('/projectByUser', controller.getProjectsByUser);
 
 router.get('/userByProject', controller.getUserByProject);
