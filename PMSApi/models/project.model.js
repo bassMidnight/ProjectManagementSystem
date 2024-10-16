@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
     id : String,
-    projectName : String,
+    projectName : {type: String, unique: true},
     lead : String,
     progress: {type: Number, default: 0},
     startDate: Date,

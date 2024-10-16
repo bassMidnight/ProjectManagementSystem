@@ -73,6 +73,10 @@ async function CreateProject(req, res) {
     if (!projectName || !lead) {
         return res.status(400).json({ error: true, message: 'projectName and lead are required' });
     }
+    const project = await Project.findOne({projectName});
+    if (project) {
+        return res.status(400).json({ error: true, message: 'projectName already exist' });
+    }
     try {
         const id = req.body.id||projectName.slice(0, 3) + "001";
         const newProject = await Project.create({ id, projectName, lead ,startDate, completeDate});
