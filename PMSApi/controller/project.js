@@ -75,11 +75,11 @@ async function CreateProject(req, res) {
     }
     if (!id) {
         let random = Math.floor(Math.random() * 9000) + 1000;
-        id = projectName.slice(0, 4) + random;
+        id = projectName.slice(0, 3) + random;
         let idcheck = await Project.findOne({id});
         while (idcheck) {
             random = Math.floor(Math.random() * 9000) + 1000;
-            id = projectName.slice(0, 4) + random;
+            id = projectName.slice(0, 3) + random;
             idcheck = await Project.findOne({id});
         }
     }
