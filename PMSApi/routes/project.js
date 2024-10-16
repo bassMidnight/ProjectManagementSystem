@@ -7,6 +7,12 @@ const projectSkillController = require('../controller/projectSkill.js');
 // Adding a route for /api/
 router.get('/', controller.getProjects);
 
+router.post('/', controller.CreateProject);
+
+router.put('/', controller.UpdateProject);
+
+router.delete('/', controller.DeleteProject);
+
 router.get('/projectByUser', controller.getProjectsByUser);
 
 router.get('/userByProject', controller.getUserByProject);

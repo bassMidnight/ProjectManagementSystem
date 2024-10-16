@@ -63,9 +63,63 @@ async function getUserByProject(req, res) {
     }
 }
 
+// Create a new project
+async function CreateProject(req, res) {
+    const projectName = req.query.projectName;
+    const lead = req.query.lead;
+    const startDate = req.query.startDate||'';
+    const endDate = req.query.endDate||'';
+
+    if (!projectName || !lead) {
+        return res.status(400).json({ error: true, message: 'projectName and lead are required' });
+    }
+    try {
+        const id = req.query.id||projectName.slice(0, 3) + "001";
+        const newProject = await Project.create({ id, projectName, lead ,startDate, endDate});
+        return res.status(200).json({error: false, message: 'Create success', data: newProject });
+    } catch (error) {
+        return res.status(500).json({error: true, message: error.message });
+    }
+}
+
+async function UpdateProject(req, res) {
+    const projectName = req.query.projectName;
+    const lead = req.query.lead;
+    const startDate = req.query.startDate||'';
+    const endDate = req.query.endDate||'';
+
+    if (!projectName || !lead) {
+        return res.status(400).json({ error: true, message: 'projectId, projectName and lead are required' });
+    }
+    try {
+        const id = projectName.slice(0, 3) + "001"
+        const updatedProject = await Project.findByIdAndUpdate(id, { projectName, lead ,startDate, endDate}, { new: true });
+        return res.status(200).json({error: false, message: 'Update success', data: updatedProject });
+    } catch (error) {
+        return res.status(500).json({error: true, message: error.message });
+    }
+}
+
+async function DeleteProject(req, res) {
+    const id = req.query.id;
+    if (!id) {
+        return res.status(400).json({ error: true, message: 'id is required' });
+    }
+    try {
+        const deletedProject = await Project.findOneAndDelete({id});
+        return res.status(200).json({error: false, message: 'Delete success', data: deletedProject });
+    } catch (error) {
+        return res.status(500).json({error: true, message: error.message });
+    }
+}
+
 // Export the function
 module.exports = {
-    getProjects, 
-    getProjectsByUser, 
-    getUserByProject
+    getProjects,
+    getProjectsByUser,
+    getUserByProject,
+
+    CreateProject,
+    UpdateProject,
+    DeleteProject
 };
