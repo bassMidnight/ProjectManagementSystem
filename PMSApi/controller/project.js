@@ -88,6 +88,10 @@ async function CreateProject(req, res) {
         }
     }
     try {
+        const idcheck2 = await Project.findOne({id});
+        if (idcheck2) {
+            return res.status(400).json({ error: true, message: 'id already exist' });
+        }
         const newProject = await Project.create({ id, projectName, lead ,startDate, completeDate});
         return res.status(200).json({error: false, message: 'Create success', data: newProject });
     } catch (error) {
