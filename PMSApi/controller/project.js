@@ -102,11 +102,16 @@ async function UpdateProject(req, res) {
     const completeDate = req.body.completeDate||'';
     const projectId = req.query.projectId;
 
+
     if (!projectId) {
         return res.status(400).json({ error: true, message: 'id is required' });
     }
     try {
         const pId = req.body.id;
+        const idcheck = await Project.findOne({id: pId});
+        if (idcheck) {
+            return res.status(400).json({ error: true, message: 'projectId already exist, please use new id' });
+        }
         const updatedProject = await Project.findOneAndUpdate({id: projectId}, { id: pId, projectName, lead ,startDate, completeDate}, { new: true });
         return res.status(200).json({error: false, message: 'Update success', data: updatedProject });
     } catch (error) {
