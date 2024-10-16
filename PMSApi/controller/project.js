@@ -69,7 +69,7 @@ async function CreateProject(req, res) {
     const lead = req.body.lead;
     const startDate = req.body.startDate||'';
     const completeDate = req.body.completeDate||'';
-
+    var id = req.body.id||'';
     if (!projectName || !lead) {
         return res.status(400).json({ error: true, message: 'projectName and lead are required' });
     }
@@ -77,8 +77,17 @@ async function CreateProject(req, res) {
     if (project) {
         return res.status(400).json({ error: true, message: 'projectName already exist' });
     }
+    if (!id) {
+        let random = Math.floor(Math.random() * 9000) + 1000;
+        id = projectName.slice(0, 4) + random;
+        let idcheck = await Project.findOne({id});
+        while (idcheck) {
+            random = Math.floor(Math.random() * 9000) + 1000;
+            id = projectName.slice(0, 4) + random;
+            idcheck = await Project.findOne({id});
+        }
+    }
     try {
-        const id = req.body.id||projectName.slice(0, 3) + "001";
         const newProject = await Project.create({ id, projectName, lead ,startDate, completeDate});
         return res.status(200).json({error: false, message: 'Create success', data: newProject });
     } catch (error) {
