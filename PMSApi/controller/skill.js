@@ -48,7 +48,14 @@ async function CreateSkill (req, res, next) {
         })
     }
     try {
-        const id = req.body.name.slice(0, 4).toLowerCase()+"001";
+        var id = req.body.name.slice(0, 4).toLowerCase()+Math.floor(Math.random() * 9000) + 1000;
+        const check = await skillModel.findOne({id: id});
+        if (check) {
+            while (check) {
+                id = req.body.name.slice(0, 4).toLowerCase()+Math.floor(Math.random() * 9000) + 1000;
+                check = await skillModel.findOne({id: id});
+            }
+        }
         const skill = await skillModel.create({
             id: id,
             name: name,
