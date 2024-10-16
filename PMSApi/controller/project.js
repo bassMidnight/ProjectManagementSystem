@@ -63,9 +63,30 @@ async function getUserByProject(req, res) {
     }
 }
 
+// Create a new project
+async function CreateProject(req, res) {
+    const projectName = req.query.projectName;
+    const lead = req.query.lead;
+    const startDate = req.query.startDate||'';
+    const endDate = req.query.endDate||'';
+
+    if (!projectName || !lead) {
+        return res.status(400).json({ error: true, message: 'projectName and lead are required' });
+    }
+    try {
+        const id = projectName.slice(0, 3) + "001"
+        const newProject = await Project.create({ id, projectName, lead ,startDate, endDate});
+        return res.status(200).json({error: false, message: 'success', data: newProject });
+    } catch (error) {
+        return res.status(500).json({error: true, message: error.message });
+    }
+}
+
 // Export the function
 module.exports = {
-    getProjects, 
-    getProjectsByUser, 
-    getUserByProject
+    getProjects,
+    getProjectsByUser,
+    getUserByProject,
+
+    CreateProject
 };
