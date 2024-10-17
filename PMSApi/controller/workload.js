@@ -36,6 +36,20 @@ async function GetEmployeeWorkload(req, res) {
 }
 
 async function CreateEmployeeWorkload(req, res) {
+    const eId = req.body.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+
+    const pId = req.body.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+
+    const workload = req.body.workload;
+    if (!workload) {
+        return res.status(400).json({ message: 'workload is required' });
+    }
     try {
         let currentWeek = getWeekNumber(new Date());
         const workload = await workloadModel.create({
