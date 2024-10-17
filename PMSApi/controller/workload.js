@@ -3,20 +3,33 @@ const workloadModel = require('../models/workload.model');
 
 let {getWeekNumber} = require('../utils/getWeekNumber');
 async function GetEmployeeWorkload(req, res) {
+    const pId = req.query.pId;
     const eId = req.query.eId;
+
+    let page = req.query.page || 1
+    let size = req.query.size || 10
+
+    size = parseInt(size);
+    const offset = (page - 1) * size;
+
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
     }
-    const pId = req.query.pId;
-    if (!pId) {
-        return res.status(400).json({ message: 'pId is required' });
-    }
     try {
-        const workload = await workloadModel.find({ eId: eId, pId: pId });
+        const workload = await workloadModel.find(
+            { eId, ...(pId ? { pId } : {}) }).skip(offset).limit(size);
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
-        return res.status(200).json({ data: workload });
+
+        const workloadTotal = await workloadModel.find(
+            { eId, ...(pId ? { pId } : {}) }).countDocuments();
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+
+        
+        return res.status(200).json({ data: workload, total: workload.length, total_all: workloadTotal });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
