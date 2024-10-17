@@ -36,8 +36,43 @@ async function GetEmployeeById (req, res, next) {
 }
 
 async function CreateEmployee (req, res, next) {
+
+    let {
+        eId,
+        name,
+        surname,
+        shortname,
+        branch,
+        position,
+        department,
+        one_mail,
+        role
+    } = req.body;
+
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+
+    if (!one_mail) {
+        return res.status(400).json({ message: 'one_mail is required' });
+    }
+
+    if (!name || !surname) {
+        return res.status(400).json({ message: 'name and surname are required' });
+    }
+    
     try {
-        const employee = await employeeModel.create(req.body);
+        const employee = await employeeModel.create({
+            eId,
+            name,
+            surname,
+            shortname,
+            branch,
+            position,
+            department,
+            one_mail,
+            role
+        });
         res.send({
             status: 200,
             message: "success",

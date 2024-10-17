@@ -38,8 +38,9 @@ exports.loginHandler = async (req, res) => {
                         // console.log(result_profile);
                         
                         //check existing user
-                        const user = await employeeModel.findOne({ one_id: id });
-                            
+                        // const user = await employeeModel.findOne({ one_id: id });
+                        const user = await employeeModel.findOne({ one_mail: thai_email });
+                        
                         if (user) {
                             const token = jwt.sign({ id: user.id, oneId: user.one_id, roleName: user.role_name }, config.secret, { 
                                 algorithm: 'HS256',
@@ -67,46 +68,53 @@ exports.loginHandler = async (req, res) => {
                             });
                         } else {
 
-                            const user = await employeeModel.create({
-                                one_id: id,
-                                one_mail: thai_email,
-                                title: account_title_th,
-                                name: first_name_th,
-                                surname: last_name_th,
-                                role: "dev",
+                            return res.status(401).send({
+                                error: true,
+                                message: "Unauthorized",
+                                detail: "user not found."
                             });
 
-                            const token = jwt.sign({ id: user.id, oneId: user.one_id, roleName: user.role_name }, config.secret, { 
-                                algorithm: 'HS256',
-                                allowInsecureKeySizes: true,
-                                expiresIn: "1d" 
-                            });
+                            // const user = await employeeModel.create({
+                            //     one_id: id,
+                            //     one_mail: thai_email,
+                            //     title: account_title_th,
+                            //     name: first_name_th,
+                            //     surname: last_name_th,
+                            //     role: "dev",
+                            // });
 
-                            req.session.token = token;
+                            // const token = jwt.sign({ id: user.id, oneId: user.one_id, roleName: user.role_name }, config.secret, { 
+                            //     algorithm: 'HS256',
+                            //     allowInsecureKeySizes: true,
+                            //     expiresIn: "1d" 
+                            // });
 
-                            return res.status(200).send({
-                                error: false,
-                                message: 'Authorized.',
-                                user: {
-                                    userId: user.id || "",
-                                    eId: user.eId || "",
-                                    oneId: user.one_id || "",
-                                    oneMail: user.one_mail || "",
-                                    firstName: first_name_th || "",
-                                    lastName: last_name_th || "",
-                                    roleName: user.role || "",
-                                    phoneNumber: user.phoneNumber || "",
-                                    access_token: access_token
-                                },
-                                token,
-                            });
+                            // req.session.token = token;
+
+                            // return res.status(200).send({
+                            //     error: false,
+                            //     message: 'Authorized.',
+                            //     user: {
+                            //         userId: user.id || "",
+                            //         eId: user.eId || "",
+                            //         oneId: user.one_id || "",
+                            //         oneMail: user.one_mail || "",
+                            //         firstName: first_name_th || "",
+                            //         lastName: last_name_th || "",
+                            //         roleName: user.role || "",
+                            //         phoneNumber: user.phoneNumber || "",
+                            //         access_token: access_token
+                            //     },
+                            //     token,
+                            // });
                         }
                     }
                 })
             } else {
                 return res.status(401).send({
                     error: true,
-                    message: "Unauthorized"
+                    message: "Unauthorized",
+                    detail: "login failed."
                 });
             }
         })
