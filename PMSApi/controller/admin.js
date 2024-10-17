@@ -84,10 +84,12 @@ async function modeProject(Search ,currentWeek, queryDate) {
     
     const projects = await projectModel.aggregate([
         {
+            
             $match: {
                 projectName: { $regex: Search, $options: 'i' }, // กรองตามชื่อโปรเจกต์ โดยใช้ regex (กรณี projectNameFilter เป็นตัวแปรที่ส่งเข้ามา)
-                projectName: { $nin : projectTop3.map(project => project.projectName)},
+                // projectName: { $nin : projectTop3.map(project => project.projectName)},
             }
+            
         },
         {
             $lookup: {
@@ -137,7 +139,7 @@ async function modeProject(Search ,currentWeek, queryDate) {
     return { projectTop3, projects };
 }
 
-async function modeLead(leadSearchTerm, currentWeek, queryDate) {
+async function modeLead(leadSearch, currentWeek, queryDate) {
 
     const projectTop3 = await projectModel.aggregate([
         {
@@ -220,7 +222,7 @@ async function modeLead(leadSearchTerm, currentWeek, queryDate) {
                 $expr: {
                     $regexMatch: {
                         input: { $concat: ["$leadData.name", " ", "$leadData.surname"] }, // รวม name และ surname
-                        regex: leadSearchTerm, // ใช้เงื่อนไขค้นหาจาก lead
+                        regex: leadSearch, // ใช้เงื่อนไขค้นหาจาก lead
                         options: "i" // ทำการค้นหาแบบไม่สนใจตัวพิมพ์ใหญ่เล็ก
                     }
                 }
