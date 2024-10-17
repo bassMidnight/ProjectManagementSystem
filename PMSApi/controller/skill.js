@@ -48,9 +48,9 @@ async function CreateSkill (req, res, next) {
         })
     }
     try {
-        const id = req.body.name.slice(0, 4).toLowerCase()+"001";
+        // const id = req.body.name.slice(0, 4).toLowerCase()+"001";
         const skill = await skillModel.create({
-            id: id,
+            // id: id,
             name: name,
             description: req.body.description || "",
         });

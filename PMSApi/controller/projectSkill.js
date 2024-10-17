@@ -1,5 +1,5 @@
 const projectSkillModel = require('../models/projectSkill.model');
-
+const Skill = require('../models/skill.model');
 async function GetProjectSkills(req, res) {
     const pId = req.query.pId;
     if (!pId) {
@@ -44,15 +44,26 @@ async function GetProjectSkills(req, res) {
 }
 
 async function AddProjectSkill(req, res) {
-    const pId = req.query.pId;
-    if (!pId) {
-        return res.status(400).json({ message: 'pId is required' });
+    const projectId = req.query.projectId;
+    if (!projectId) {
+        return res.status(400).json({ message: 'project id is required' });
     }
-    const sId = req.query.sId;
-    if (!sId) {
-        return res.status(400).json({ message: 'sId is required' });
+    const skillId = req.query.skillId;
+    if (!skillId) {
+        return res.status(400).json({ message: 'skill id is required' });
     }
     try {
+
+        const checkSkill = await Skill.findOne({ id: skillId });
+        if (!checkSkill) {
+            return res.status(400).json({ message: 'skill not found' });
+        }
+
+        const project = await Project.findOne({ id: projectId });
+        if (!project) {
+            return res.status(400).json({ message: 'project not found' });
+        }
+        
         const projectSkill = await projectSkillModel.create({
             pId: pId,
             sId: sId
