@@ -385,13 +385,18 @@ async function getHistory(req, res) {
             { $unwind: "$employeeData" },
             {
                 $project: {
+                    _id: 1,
                     pId: 1,
                     eId: 1,
                     workload: 1,
                     weekOfYear: 1,
                     desc: 1,
                     projectName: "$projectData.projectName",
-                    employeeName: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] }
+                    employeeName: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] },
+                    shortname: "$employeeData.shortname",
+                    createdAt: 1,
+                    notation: 1,
+
                 }
             },
             { $sort: { createdAt: -1 } },
@@ -401,12 +406,26 @@ async function getHistory(req, res) {
 
         const workloadCount = await workloadModel.countDocuments(filterQuery);
 
+        const result = workloads.map(workload => ({
+            id: workload._id,
+            desc: workload.desc,
+            notation: workload.notation,
+            createdAt: workload.createdAt,
+            eFullName: workload.employeeName,
+            eShortName: workload.shortname,
+            projectName: workload.projectName,
+            pId: workload.pId,
+            eId: workload.eId,
+            workload: workload.workload,
+            weekOfYear: workload.weekOfYear,
+        }));
+
         res.status(200).json({
             error: false,
             message: "Success",
             data: {
-                result: workloads,
-                total: workloads.length,
+                result: result,
+                total: result.length,
                 totalAll: workloadCount
             }
         });
@@ -415,6 +434,29 @@ async function getHistory(req, res) {
     }
 }
 
+// {
+//     "id": "66fe5691d0dda61d68f7e481",
+//     "desc": "จัดการ API CRUD ของระบบจอง",
+//     "eFullName": "กษิดิ์เดช ทองดอนเกื้อง",
+//     "projectName": "Telemedecine",
+//     "pId": "Tel001",
+//     "eId": "67152",
+//     "workload": 40,
+//     "weekOfYear": 38
+// },
+
+// {
+//     "id": "670de930a6f88c75f7966ea9",
+//     "desc": "",
+//     "notation": "",
+//     "createdAt": "2024-10-15T04:01:52.156Z",
+//     "eFullName": "เฉลิมพงศ์ สมศรี",
+//     "eShortName": "แคน",
+//     "projectName": "Nex Gen Commerce",
+//     "eId": "66559",
+//     "pId": "Nex001",
+//     "workload": ""
+// },
 
 module.exports = {
     getProjectOrLead,
