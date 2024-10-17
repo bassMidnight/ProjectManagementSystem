@@ -1,8 +1,12 @@
 const employeeModel = require("../models/employee.model");
-const {weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId} = require("../utils/weeklyQuery");
-const {getWeekNumber} = require("../utils/getWeekNumber");
+const { weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId } = require("../utils/weeklyQuery");
+const { getWeekNumber } = require("../utils/getWeekNumber");
+const workloadModel = require("../models/workload.model");
+const e = require("express");
+const projectModel = require("../models/project.model");
+const projectMemberModel = require("../models/projectMember.model");
 
-async function GetEmployees (req, res, next) {
+async function GetEmployees(req, res, next) {
     if (req.query.eId) {
         return GetEmployeeById(req, res, next);
     }
@@ -18,7 +22,7 @@ async function GetEmployees (req, res, next) {
     }
 }
 
-async function GetEmployeeById (req, res, next) {
+async function GetEmployeeById(req, res, next) {
     const eId = req.query.eId;
     const employee = await employeeModel.findOne({ eId });
     try {
@@ -35,7 +39,7 @@ async function GetEmployeeById (req, res, next) {
     }
 }
 
-async function CreateEmployee (req, res, next) {
+async function CreateEmployee(req, res, next) {
     try {
         const employee = await employeeModel.create(req.body);
         res.send({
@@ -48,7 +52,7 @@ async function CreateEmployee (req, res, next) {
     }
 }
 
-async function UpdateEmployeeById (req, res, next) {
+async function UpdateEmployeeById(req, res, next) {
     try {
         const eId = req.query.eId;
         const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
@@ -66,7 +70,7 @@ async function UpdateEmployeeById (req, res, next) {
 }
 
 
-async function DeleteEmployeeById (req, res, next) {
+async function DeleteEmployeeById(req, res, next) {
     try {
         const eId = req.query.eId;
         const employee = await employeeModel.findOneAndDelete({ eId });
@@ -130,6 +134,68 @@ async function GetEmployeeProjectMemberWorkload(req, res, next) {
     }
 }
 
+
+// Get Employee Workload by eId
+async function GetEmployeeWorkloadHistory(req, res, next) {
+    const { employeeId, projectId } = req.query;
+
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+    let offset = (page - 1) * size;
+
+    try {
+        if (!employeeId) {
+            throw new Error("Employee ID is required.");
+        }
+
+        const workloadQuery = { eId: employeeId };
+        if (projectId) {
+            workloadQuery.pId = projectId;
+        }
+
+        const workloads = await workloadModel.find(workloadQuery)
+            .skip(offset)
+            .limit(size)
+            .sort({ createdAt: -1 });
+
+        const workloadTotal = await workloadModel.countDocuments(workloadQuery);
+
+        const employee = await employeeModel.findOne({ eId: employeeId });
+
+        const projectIds = [...new Set(workloads.map(workload => workload.pId))];
+        const projects = await projectModel.find({ id: { $in: projectIds } });
+
+        const result = workloads.map(workload => {
+            const project = projects.find(p => p.id === workload.pId);
+            return {
+                id: workload._id,
+                desc: workload.desc,
+                createdAt: workload.createdAt,
+                employeeId: workload.eId,
+                employeeFullName: employee ? `${employee.name} ${employee.surname}` : "",
+                employeeShortName: employee ? employee.shortname : "",
+                projectName: project ? project.projectName : "",
+                projectId: workload.pId,
+                workload: workload.workload
+            };
+        });
+
+        return res.status(200).json({
+            error: false,
+            message: "success",
+            data: {
+                result: result,
+                total: result.length,
+                totalAll: workloadTotal,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
+    }
+}
+
+
 module.exports = {
     GetEmployees,
     GetEmployeeById,
@@ -137,5 +203,6 @@ module.exports = {
     CreateEmployee,
     DeleteEmployeeById,
     GetEmployeeAllProject,
-    GetEmployeeProjectMemberWorkload
+    GetEmployeeProjectMemberWorkload,
+    GetEmployeeWorkloadHistory
 }
