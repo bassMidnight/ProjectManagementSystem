@@ -24,4 +24,9 @@ router.get('/allEmployee', middleware.tokenValidator, controller.getAllEmployee 
 router.post('/employeeProject', middleware.tokenValidator, controller.addEmployeeToProject );
 router.delete('/employeeProject', middleware.tokenValidator, controller.deleteEmployeeFromProject );
 
+// add - remove employee from project list
+
+router.post('/employeeListProject', controller.addEmployeesListToProject );
+router.delete('/employeeListProject', controller.deleteEmployeesListFromProject );
+
 module.exports = router;

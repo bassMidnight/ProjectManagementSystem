@@ -583,56 +583,165 @@ async function deleteEmployeeFromProject(req, res) {
 async function getAllEmployee(req, res) {
   const employeeName = req.query.employeeName;
 
-  try {
-    const employees = await EmployeeModel.aggregate([
-      {
-        $addFields: {
-          fullName: { $concat: ["$name", " ", "$surname"] }, // รวม name กับ surname เข้าด้วยกัน
-        },
-      },
-      {
-        $match: {
-          fullName: {
-            $regex: employeeName ? employeeName : "", // ค้นหาตาม employeeName
-            $options: "i", // ไม่สนใจตัวพิมพ์เล็ก-ใหญ่
-          },
-        },
-      },
-      {
-        $project: {
-          eId: 1,
-          name: 1,
-          surname: 1,
-        },
-      },
-    ]);
+    try {
+        const employees = await EmployeeModel.aggregate([
+            {
+                $addFields: {
+                    fullName: { $concat: ["$name", " ", "$surname"] } // รวม name กับ surname เข้าด้วยกัน
+                }
+            },
+            {
+                $match: {
+                    fullName: { 
+                        $regex: employeeName ? employeeName : '', // ค้นหาตาม employeeName
+                        $options: 'i' // ไม่สนใจตัวพิมพ์เล็ก-ใหญ่
+                    }
+                }
+            },
+            {
+                $project: {
+                    eId : 1,
+                    name : 1,
+                    surname : 1,
+                }
+            }
+        ]);
 
-    let result = employees.map((employee) => ({
-      eId: employee.eId,
-      fullName: `${employee.name} ${employee.surname}`,
-    }));
-
-    return res
-      .status(200)
-      .json({ error: false, message: "success", data: result });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: true, message: error.message });
-  }
+        let result = employees.map(employee => ({
+            eId : employee.eId,
+            fullName : `${employee.name} ${employee.surname}`,
+        }));
+         
+        return res.status(200).json({ error: false, message: "success", data: result });
+    } catch (error) { 
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
+    }
 }
+
+async function addEmployeesListToProject(req, res) {
+    const employeeIds = req.body.eIds;  // Expecting a list of employee IDs in the request body
+    const projectId = req.body.pId;
+
+    if (!employeeIds || employeeIds.length === 0) {
+        return res.status(400).json({ error: true, message: 'Employee IDs are required.' });
+    }
+
+    if (!projectId) {
+        return res.status(400).json({ error: true, message: 'Project ID is required.' });
+    }
+
+    try {
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            throw new Error('Project not found.');
+        }
+
+        const failedEmployees = [];
+        const addedEmployees = [];
+
+        for (let employeeId of employeeIds) {
+            const employee = await EmployeeModel.findOne({ eId: employeeId });
+            if (!employee) {
+                failedEmployees.push(employeeId);  // Record failed employees
+                continue;
+            }
+
+            const newEmployeeProject = await ProjectMemberModel.create({
+                eId: employeeId,
+                pId: projectId
+            });
+
+            if (newEmployeeProject) {
+                addedEmployees.push(employeeId);  // Record successful additions
+            } else {
+                failedEmployees.push(employeeId);
+            }
+        }
+
+        return res.status(200).json({
+            error: false,
+            message: "Employees processed successfully.",
+            addedEmployees,
+            failedEmployees
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
+    }
+}
+
+async function deleteEmployeesListFromProject(req, res) {
+    const employeeIds = req.body.eIds;  // Expecting a list of employee IDs in the request body
+    const projectId = req.body.pId;
+
+    console.log(employeeIds);
+    console.log(projectId);
+
+    if (!employeeIds || employeeIds.length === 0) {
+        return res.status(400).json({ error: true, message: 'Employee IDs are required.' });
+    }
+
+    if (!projectId) {
+        return res.status(400).json({ error: true, message: 'Project ID is required.' });
+    }
+
+    try {
+        const project = await ProjectModel.findOne({ id: projectId });
+        if (!project) {
+            throw new Error('Project not found.');
+        }
+
+        const failedEmployees = [];
+        const deletedEmployees = [];
+
+        for (let employeeId of employeeIds) {
+            const employee = await EmployeeModel.findOne({ eId: employeeId });
+            if (!employee) {
+                failedEmployees.push(employeeId);  // Record failed deletions
+                continue;
+            }
+
+            const deleteResult = await ProjectMemberModel.findOneAndDelete({
+                eId: employeeId,
+                pId: projectId
+            });
+
+            if (deleteResult) {
+                deletedEmployees.push(employeeId);  // Record successful deletions
+            } else {
+                failedEmployees.push(employeeId);
+            }
+        }
+
+        return res.status(200).json({
+            error: false,
+            message: "Employees processed successfully.",
+            deletedEmployees,
+            failedEmployees
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: true, message: error.message });
+    }
+}
+
 
 // Export the function
 module.exports = {
-  getProjects,
-  getGraph,
-  getProjectMenberList,
-  getWorkLoad,
-  updateWorkLoad,
-  getEmployeeDropdown,
-  getProjectDropdown,
-  getWorkLoadHistory,
-  getworkloadHistoryDetail,
-  addEmployeeToProject,
-  deleteEmployeeFromProject,
-  getAllEmployee,
+    getProjects,
+    getGraph,
+    getProjectMenberList,
+    getWorkLoad,
+    updateWorkLoad,
+    getEmployeeDropdown,
+    getProjectDropdown,
+    getWorkLoadHistory,
+    getworkloadHistoryDetail,
+    addEmployeeToProject,
+    deleteEmployeeFromProject,
+    getAllEmployee,
+
+    addEmployeesListToProject,
+    deleteEmployeesListFromProject
 };

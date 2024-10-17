@@ -9,6 +9,12 @@ const middleware = require('../middleware/auth.js');
 // Adding a route for /api/
 router.get('/', middleware.tokenValidator, controller.getProjects);
 
+router.post('/', middleware.tokenValidator, controller.CreateProject);
+
+router.put('/', middleware.tokenValidator, controller.UpdateProject);
+
+router.delete('/', middleware.tokenValidator, controller.DeleteProject);
+
 router.get('/projectByUser', middleware.tokenValidator, controller.getProjectsByUser);
 
 router.get('/userByProject', middleware.tokenValidator, controller.getUserByProject);

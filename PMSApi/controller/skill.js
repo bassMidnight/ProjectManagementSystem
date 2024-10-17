@@ -5,7 +5,7 @@ async function GetAllSkills(req, res) {
         return GetSkillById(req, res);
     }
     try {
-        const skills = await skillModel.find();
+        const skills = await skillModel.find().lean();
         res.send({
             status: 200,
             message: "success",
