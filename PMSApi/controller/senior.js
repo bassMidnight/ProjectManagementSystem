@@ -457,7 +457,8 @@ async function getWorkLoadHistory(req, res) {
         : "",
       eId : workload.eId || "",
       pId : workload.pId || "",
-      workload : workload.workload || ""
+      workload : workload.workload || "",
+      weekOfYear : workload.weekOfYear || "",
     }));
 
     return res.status(200).json({
