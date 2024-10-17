@@ -205,13 +205,15 @@ async function GetEmployeeWorkloadHistory(req, res, next) {
             return {
                 id: workload._id,
                 desc: workload.desc,
+                notation: workload.notation,
                 createdAt: workload.createdAt,
                 employeeId: workload.eId,
                 employeeFullName: employee ? `${employee.name} ${employee.surname}` : "",
                 employeeShortName: employee ? employee.shortname : "",
                 projectName: project ? project.projectName : "",
                 projectId: workload.pId,
-                workload: workload.workload
+                workload: workload.workload,
+                weekofyear: workload.weekOfYear
             };
         });
 
