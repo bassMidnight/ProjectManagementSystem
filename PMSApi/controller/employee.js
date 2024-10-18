@@ -16,6 +16,7 @@ async function GetEmployees(req, res, next) {
             data: employees,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -33,6 +34,7 @@ async function GetEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -81,6 +83,7 @@ async function CreateEmployee (req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -101,6 +104,7 @@ async function UpdateEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -122,6 +126,7 @@ async function DeleteEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -146,6 +151,7 @@ async function GetEmployeeAllProject(req, res, next) {
             data: [projects],
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -169,6 +175,7 @@ async function GetEmployeeProjectMemberWorkload(req, res, next) {
             data: [projects],
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
