@@ -141,39 +141,39 @@ exports.loginHandler = async (req, res) => {
 };
 
 exports.changeRole = async (req, res) => {
-    const { employeeId, roleName } = req.body;
+    const { employeeId, newRole } = req.body;
 
-    if (!employeeId || !roleName) {
-        return res.status(400).send({
+    if (!employeeId || !newRole) {
+        return res.status(400).json({
             error: true,
-            message: "Require employeeId/roleName in field.",
+            message: "Employee ID and new role are required fields.",
         });
     }
 
-    if (roleName !== 'dev' && roleName !== 'lead' && roleName !== 'admin') {
-        return res.status(400).send({
+    if (newRole !== 'dev' && newRole !== 'lead' && newRole !== 'admin') {
+        return res.status(400).json({
             error: true,
-            message: "Invalid roleName.",
+            message: "Invalid role name.",
         });
     }
 
     try {
         const user = await employeeModel.findOneAndUpdate(
             { eId: employeeId },
-            { roleName },
-            { new: true },
+            { roleName: newRole },
+            { new: true }
         );
 
         if (!user) {
-            return res.status(404).send({
+            return res.status(404).json({
                 error: true,
                 message: "User not found.",
             });
         }
 
-        res.status(200).send({
+        res.status(200).json({
             error: false,
-            message: 'Change role success.',
+            message: 'Role changed successfully.',
             user,
         });
 
