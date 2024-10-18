@@ -1,10 +1,8 @@
 const employeeModel = require("../models/employee.model");
-const { weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId } = require("../utils/weeklyQuery");
+const { weeklyMemberProjectQueryByWeek, weeklyQueryByPId } = require("../utils/weeklyQuery");
 const { getWeekNumber } = require("../utils/getWeekNumber");
 const workloadModel = require("../models/workload.model");
-const e = require("express");
 const projectModel = require("../models/project.model");
-const projectMemberModel = require("../models/projectMember.model");
 
 async function GetEmployees(req, res, next) {
     if (req.query.eId) {
@@ -24,8 +22,8 @@ async function GetEmployees(req, res, next) {
 
 async function GetEmployeeById(req, res, next) {
     const eId = req.query.eId;
-    const employee = await employeeModel.findOne({ eId });
     try {
+        const employee = await employeeModel.findOne({ eId });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
         }
@@ -64,7 +62,7 @@ async function CreateEmployee (req, res, next) {
     if (!name || !surname) {
         return res.status(400).json({ message: 'name and surname are required' });
     }
-    
+
     try {
         const employee = await employeeModel.create({
             eId,
@@ -88,8 +86,11 @@ async function CreateEmployee (req, res, next) {
 }
 
 async function UpdateEmployeeById(req, res, next) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: "eId is required" });
+    }
     try {
-        const eId = req.query.eId;
         const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
@@ -106,8 +107,11 @@ async function UpdateEmployeeById(req, res, next) {
 
 
 async function DeleteEmployeeById(req, res, next) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: "eId is required" });
+    }
     try {
-        const eId = req.query.eId;
         const employee = await employeeModel.findOneAndDelete({ eId });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
