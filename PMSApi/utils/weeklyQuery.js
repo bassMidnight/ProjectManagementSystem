@@ -66,6 +66,9 @@ async function weeklyMemberQueryByWeek(lead, weekOfYear, year) {
                 employeeShortName: { $first: "$employeeDetails.shortname" },
                 employeePosition: { $first: "$employeeDetails.position" },
                 employeeStartDate: { $first: "$employeeDetails.startDate" },
+                employeeOneMail: { $first: "$employeeDetails.one_mail" },
+                employeeOneId: { $first: "$employeeDetails.branch" },
+                employeeDepartment: { $first: "$employeeDetails.department" },
                 workload: {
                     $sum: {
                         $cond: [
@@ -119,6 +122,9 @@ async function weeklyMemberQueryByWeekWithoutLead(weekOfYear, year) {
                 employeeShortName: "$shortname",
                 employeePosition: "$position",
                 employeeStartDate: "$startDate",
+                employeeOneMail: "$one_mail",
+                employeeOneId: "$branch",
+                employeeDepartment: "$department",
                 workload: {
                     $cond: [
                         { $eq: [{ $size: "$workload" }, 0] },
