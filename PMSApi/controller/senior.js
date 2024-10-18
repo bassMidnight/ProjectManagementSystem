@@ -439,7 +439,8 @@ async function getWorkLoadHistory(req, res) {
 
     const result = workloads.map((workload) => ({
       id: workload._id,
-      desc: workload.desc,
+      desc: workload.desc || "",
+      notation: workload.notation || "",
       createdAt: workload.createdAt,
       eFullName: employees.find((employee) => employee.eId === workload.eId)
         ? `${
@@ -454,6 +455,10 @@ async function getWorkLoadHistory(req, res) {
       projectName: projects.find((project) => project.id === workload.pId)
         ? projects.find((project) => project.id === workload.pId).projectName
         : "",
+      eId : workload.eId || "",
+      pId : workload.pId || "",
+      workload : workload.workload || "",
+      weekOfYear : workload.weekOfYear || "",
     }));
 
     return res.status(200).json({

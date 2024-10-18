@@ -33,6 +33,6 @@ router.delete('/skills', middleware.tokenValidator, async function(req, res) {
 });
 
 router.get('/workload', middleware.tokenValidator, async function(req, res) {
-    await controller.GetEmployeeWorkload(req, res);
+    await controller.GetEmployeeWorkloadHistory(req, res);
 });
 module.exports = router;
