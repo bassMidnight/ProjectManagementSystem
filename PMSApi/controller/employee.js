@@ -97,7 +97,7 @@ async function CreateEmployee (req, res, next) {
 
 async function UpdateEmployeeById(req, res, next) {
     try {
-        const eId = req.query.eId;
+        const eId = req.body.eId;
         const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
