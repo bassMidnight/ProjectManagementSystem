@@ -67,20 +67,33 @@ async function CreateEmployeeWorkload(req, res) {
 }
 
 async function UpdateEmployeeWorkload(req, res) {
-    const eId = req.query.eId || req.body.eId;
+    const { eId, pId, workload, desc } = req.body;
+
     if (!eId) {
         return res.status(400).json({ message: 'eId is required' });
     }
-    const pId = req.query.pId || req.body.pId;
     if (!pId) {
         return res.status(400).json({ message: 'pId is required' });
     }
+    if (!workload) {
+        return res.status(400).json({ message: 'workload is required' });
+    }
+    if (!desc) {
+        return res.status(400).json({ message: 'desc is required' });
+    }
+
     try {
-        const workload = await workloadModel.findOneAndUpdate({ eId: eId, pId: pId }, req.body, { new: true });
-        if (!workload) {
+        const updatedWorkload = await workloadModel.findOneAndUpdate(
+            { eId, pId },
+            { workload, desc },
+            { new: true }
+        );
+
+        if (!updatedWorkload) {
             return res.status(404).json({ message: 'workload not found' });
         }
-        return res.status(200).json({message:"updated successfully", data: workload});
+
+        return res.status(200).json({ message: 'updated successfully', data: updatedWorkload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

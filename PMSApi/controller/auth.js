@@ -137,7 +137,7 @@ exports.changeRole = async (req, res) => {
         });
     }
 
-    if (roleName !== 'user' && roleName !== 'lead' && roleName !== 'admin') {
+    if (roleName !== 'dev' && roleName !== 'lead' && roleName !== 'admin') {
         return res.status(400).send({
             error: true,
             message: "Invalid roleName.",
