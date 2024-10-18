@@ -50,7 +50,8 @@ async function CreateEmployee (req, res, next) {
         position,
         department,
         one_mail,
-        role
+        role,
+        startDate
     } = req.body;
 
     if (!eId) {
@@ -64,6 +65,12 @@ async function CreateEmployee (req, res, next) {
     if (!name || !surname) {
         return res.status(400).json({ message: 'name and surname are required' });
     }
+
+    if (!startDate) {
+        return res.status(400).json({ message: 'startDate is required' });
+    }
+
+    const startDateObj = new Date(startDate);
     
     try {
         const employee = await employeeModel.create({
@@ -75,7 +82,8 @@ async function CreateEmployee (req, res, next) {
             position,
             department,
             one_mail,
-            role
+            role,
+            startDate: startDateObj
         });
         res.send({
             status: 200,
