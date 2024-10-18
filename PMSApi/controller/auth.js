@@ -50,18 +50,31 @@ exports.loginHandler = async (req, res) => {
                             
                             req.session.token = token;
 
+                            const update_oneId = await employeeModel.findOneAndUpdate(
+                                { one_mail: thai_email },
+                                { one_id: id },
+                                { new: true },
+                            );
+
+                            if (!update_oneId) {
+                                return res.status(500).send({
+                                    error: true,
+                                    message: "Can't update one_id.",
+                                });
+                            }
+
                             return res.status(200).send({
                                 error: false,
                                 message: 'Authorized.',
                                 user: {
-                                    userId: user.id || "",
-                                    eId: user.eId || "",
-                                    oneId: user.one_id || "",
-                                    oneMail: user.one_mail || "",
+                                    userId: update_oneId.id || "",
+                                    eId: update_oneId.eId || "",
+                                    oneId: update_oneId.one_id || "",
+                                    oneMail: update_oneId.one_mail || "",
                                     firstName: first_name_th || "",
                                     lastName: last_name_th || "",
-                                    roleName: user.role || "",
-                                    phoneNumber: user.phoneNumber || "",
+                                    roleName: update_oneId.role || "",
+                                    phoneNumber: update_oneId.phoneNumber || "",
                                     access_token: access_token
                                 },
                                 token,
