@@ -157,11 +157,7 @@ async function getWorkloadsForGraphMonth(projectId, date) {
 
 async function getGraphYear(projectId, date) {
   let currentDate;
-  if (!date) {
-    currentDate = new Date();
-  } else {
-    currentDate = new Date(date);
-  }
+  currentDate = date ? new Date(date) : new Date();
 
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(currentDate.getFullYear() - 1); // วันที่ย้อนหลัง 12 เดือน
