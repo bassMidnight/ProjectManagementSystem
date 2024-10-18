@@ -1,7 +1,8 @@
 const projectMemberModel = require('../models/projectMember.model');
 const workloadModel = require('../models/workload.model');
+const projectModel = require('../models/project.model');
+let { getWeekNumber } = require('../utils/getWeekNumber');
 
-let {getWeekNumber} = require('../utils/getWeekNumber');
 async function GetEmployeeWorkload(req, res) {
     const pId = req.query.pId;
     const eId = req.query.eId;
@@ -17,7 +18,10 @@ async function GetEmployeeWorkload(req, res) {
     }
     try {
         const workload = await workloadModel.find(
-            { eId, ...(pId ? { pId } : {}) }).skip(offset).limit(size);
+            { eId, ...(pId ? { pId } : {}) })
+            .populate('pId', 'projectname')
+            .skip(offset)
+            .limit(size);
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
@@ -27,9 +31,19 @@ async function GetEmployeeWorkload(req, res) {
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
+        const workloadWithProjectName = await Promise.all(workload.map(async item => {
+            const project = item.pId ? await projectModel.findOne({id: item.pId}) : null;
+            return {
+                ...item.toObject(),
+                projectName: project ? project.projectName : null
+            };
+        }));
 
-        
-        return res.status(200).json({ data: workload, total: workload.length, total_all: workloadTotal });
+        return res.status(200).json({
+            data: workloadWithProjectName,
+            total: workload.length,
+            total_all: workloadTotal
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -60,7 +74,7 @@ async function CreateEmployeeWorkload(req, res) {
             notation: req.body.notation,
             weekOfYear: currentWeek || req.body.weekOfYear
         });
-        return res.status(200).json({message:"created successfully", data: workload});
+        return res.status(200).json({ message: "created successfully", data: workload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -113,7 +127,7 @@ async function DeleteEmployeeWorkload(req, res) {
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
-        res.status(200).json({message:"deleted successfully", data: workload});
+        res.status(200).json({ message: "deleted successfully", data: workload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -131,7 +145,7 @@ async function GetlatestWorkload(req, res) {
         return res.status(400).json({ message: 'pId is required' });
     }
     try {
-        const workload = await workloadModel.findOne({eId: eId, pId: pId , weekOfYear: currentWeek, updatedAt: {$gte: new Date(currentYear, 0, 1)}});
+        const workload = await workloadModel.findOne({ eId: eId, pId: pId, weekOfYear: currentWeek, updatedAt: { $gte: new Date(currentYear, 0, 1) } });
         if (!workload) {
             return res.status(200).json({ data: null });
         }
@@ -202,7 +216,7 @@ async function DevWorkloadController(req, res) {
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
-        res.status(200).json({message:"successfully", data: workload});
+        res.status(200).json({ message: "successfully", data: workload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
