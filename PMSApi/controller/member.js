@@ -163,7 +163,7 @@ async function GetAllProjectsAndWorkloadByDate(req, res) {
         let date = req.query.date;
         let eId = req.query.eid;
         let Week = getWeekNumber(new Date(date));
-        
+
         const projects = await weeklyMemberProjectQueryByWeek(eId, Week);
 
         res.status(200).json({
@@ -254,15 +254,15 @@ async function getAllMembersAndWorkload(req, res) {
 }
 
 async function GetMembersBySkill(req, res, next) {
-    const sId = req.query.sId;
-    if (!sId) {
+    const sId = req.body.sId;
+    if (!sId || !Array.isArray(sId) || sId.length === 0) {
         return res.status(400).json({
-            message: 'skill id is required'
-        })
+            message: 'A non-empty array of skill ids is required'
+        });
     }
     try {
-        const employeeBySkill = await EmployeeSkillModel.find({ sId: sId });
-        const employeeIds = employeeBySkill.map(item => item.eId);
+        const employeesBySkill = await EmployeeSkillModel.find({ sId: { $in: sId } });
+        const employeeIds = [...new Set(employeesBySkill.map(item => item.eId))];
         const employees = await Employee.find({ eId: { $in: employeeIds } });
         const workloads = await workloadModel.find({ eId: { $in: employeeIds } });
 
@@ -282,21 +282,18 @@ async function GetMembersBySkill(req, res, next) {
                         employeeStartDate: employee.startDate,
                         employeeOneId: employee.branch,
                         employeeDepartment: employee.department,
-                        workload: employeeWorkloads.length > 0 
-                            ? employeeWorkloads.reduce((sum, w) => sum + w.workload, 0) / employeeWorkloads.length 
+                        workload: employeeWorkloads.length > 0
+                            ? employeeWorkloads.reduce((sum, w) => sum + w.workload, 0) / employeeWorkloads.length
                             : 0
                     };
                 })
             }
         };
 
-        res.send({
-            status: 200,
-            message: "success",
-            data: result,
-        });
+        res.status(200).json(result);
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        console.error("Error in GetMembersBySkill:", error);
+        res.status(500).json({ status: "500", message: "An error occurred while fetching members by skills" });
     }
 }
 
