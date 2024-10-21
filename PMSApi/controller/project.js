@@ -125,7 +125,7 @@ async function DeleteProject(req, res) {
         return res.status(400).json({ error: true, message: 'id is required' });
     }
     try {
-        const deletedProject = await Project.deleteById(id);
+        const deletedProject = await Project.deleteOne({id});
         if (!deletedProject) {
             return res.status(404).json({error: true, message: 'Project not found' });
         }
