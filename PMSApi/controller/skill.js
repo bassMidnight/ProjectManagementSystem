@@ -107,7 +107,7 @@ async function DeleteSkillById(req, res, next) {
         })
     }
     try {
-        const skill = await skillModel.findOneAndDelete({ id: id});
+        const skill = await skillModel.delete({ id: id});
         if (!skill) {
             return res.status(404).json({
                 message: 'Skill not found'
@@ -122,11 +122,34 @@ async function DeleteSkillById(req, res, next) {
     }
 }
 
+async function restoreSkillById(req, res, next) {
+    const id = req.query.sId;
+    if (!id) {
+        return res.status(400).json({
+            message: 'Skill id is required'
+        })
+    }
+    try {
+        const skill = await skillModel.restore({ id: id});
+        if (!skill) {
+            return res.status(404).json({
+                message: 'Skill not found'
+            })
+        }
+        res.send({
+            status: 200,
+            message: "success",
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
 
 module.exports = {
     GetAllSkills,
     GetSkillById,
     CreateSkill,
     UpdateSkillById,
-    DeleteSkillById
+    DeleteSkillById,
+    restoreSkillById
 }

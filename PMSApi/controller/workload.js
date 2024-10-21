@@ -123,11 +123,31 @@ async function DeleteEmployeeWorkload(req, res) {
         return res.status(400).json({ message: 'pId is required' });
     }
     try {
-        const workload = await workloadModel.findOneAndDelete({ eId: eId, pId: pId });
+        const workload = await workloadModel.delete({ eId: eId, pId: pId });
         if (!workload) {
             return res.status(404).json({ message: 'workload not found' });
         }
         res.status(200).json({ message: "deleted successfully", data: workload });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+async function restoreEmployeeWorkload(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: 'eId is required' });
+    }
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    try {
+        const workload = await workloadModel.restore({ eId: eId, pId: pId });
+        if (!workload) {
+            return res.status(404).json({ message: 'workload not found' });
+        }
+        res.status(200).json({ message: "restore successfully", data: workload });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
@@ -227,7 +247,8 @@ module.exports = {
     CreateEmployeeWorkload,
     UpdateEmployeeWorkload,
     DeleteEmployeeWorkload,
-
+    restoreEmployeeWorkload,
+    
     GetlatestWorkload,
     GetAllMembersAndWorkload,
     GetlatestProjectWorkload,

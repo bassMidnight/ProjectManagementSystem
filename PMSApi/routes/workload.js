@@ -19,6 +19,10 @@ router.delete('/', middleware.tokenValidator, async function(req, res) {
     await workloadcontroller.DeleteEmployeeWorkload(req, res);
 });
 
+router.put('/restore', middleware.tokenValidator, async function(req, res) {
+    await workloadcontroller.restoreEmployeeWorkload(req, res);
+});
+
 router.get('/latest', middleware.tokenValidator, async function(req, res) {
     await workloadcontroller.GetlatestWorkload(req, res);
 });

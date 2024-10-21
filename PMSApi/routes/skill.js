@@ -18,5 +18,7 @@ router.put('/', middleware.tokenValidator, async function(req, res) {
 router.delete('/', middleware.tokenValidator, async function(req, res) {
     await skillController.DeleteSkillById(req, res);
 });
-
+router.put('/restore', middleware.tokenValidator, async function(req, res) {
+    await skillController.DeleteSkillById(req, res);
+});
 module.exports = router;
