@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongooseDelete = require('mongoose-delete');
 
 const projectSchema = new mongoose.Schema({
     id : {type: String, unique: true},
@@ -9,5 +10,7 @@ const projectSchema = new mongoose.Schema({
     completeDate: Date,
 
 }, { timestamps: true });
+
+projectSchema.plugin(mongooseDelete, { deletedAt: true, overrideMethods: 'all' });
 
 module.exports = mongoose.model('Project', projectSchema);
