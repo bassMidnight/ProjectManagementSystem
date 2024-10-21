@@ -262,6 +262,12 @@ async function GetMembersBySkill(req, res, next) {
     }
     try {
         const employeesBySkill = await EmployeeSkillModel.find({ sId: { $in: sId } });
+        if (employeesBySkill.length === 0) {
+            return res.status(400).json({
+                message: 'No employees found with the provided skill ids'
+            });
+        }
+
         const employeeIds = [...new Set(employeesBySkill.map(item => item.eId))];
         const employees = await Employee.find({ eId: { $in: employeeIds } });
         const workloads = await workloadModel.find({ eId: { $in: employeeIds } });
