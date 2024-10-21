@@ -2,7 +2,6 @@ const ProjectMember = require("../models/projectMember.model")
 const Project = require("../models/project.model")
 const Employee = require("../models/employee.model")
 const EmployeeSkillModel = require('../models/EmployeeSkill.model');
-const Skill = require("../models/skill.model")
 const Workload = require("../models/workload.model")
 
 const { getWeekNumber } = require("../utils/getWeekNumber")
@@ -13,7 +12,6 @@ const { weeklyQueryByEId, weeklyQueryByEIds,
         MemberWorkloadOverviewMonthly, MemberWorkloadOverviewTwelveMonths,
         weeklyMemberQueryByWeekByNameOrProject, weeklyMemberQueryByWeekWithoutLead
     } = require("../utils/weeklyQuery");
-const workloadModel = require("../models/workload.model");
 
 async function GetAllMembers(req, res) {
     try {
@@ -270,7 +268,7 @@ async function GetMembersBySkill(req, res, next) {
 
         const employeeIds = [...new Set(employeesBySkill.map(item => item.eId))];
         const employees = await Employee.find({ eId: { $in: employeeIds } });
-        const workloads = await workloadModel.find({ eId: { $in: employeeIds } });
+        const workloads = await Workload.find({ eId: { $in: employeeIds } });
 
         const result = {
             status: "200",
