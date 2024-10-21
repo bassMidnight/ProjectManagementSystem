@@ -20,6 +20,9 @@ router.put('/', middleware.tokenValidator, async function(req, res) {
 router.delete('/', middleware.tokenValidator, async function(req, res) {
     await employeeController.DeleteEmployeeById(req, res);
 });
+router.put('/restore', middleware.tokenValidator, async function(req, res) {
+    await employeeController.restoreEmployeeById(req, res);
+});
 
 //EmployeeSkill
 router.get('/skills', middleware.tokenValidator, async function(req, res) {

@@ -89,7 +89,31 @@ async function RemoveProjectSkill(req, res) {
         return res.status(400).json({ message: 'sId is required' });
     }
     try {
-        const projectSkill = await projectSkillModel.findOneAndDelete({ pId: pId, sId: sId });
+        const projectSkill = await projectSkillModel.delete({ pId: pId, sId: sId });
+        if (!projectSkill) {
+            return res.status(404).json({ message: 'project skill not found' });
+        }
+        res.send({
+            status: 200,
+            message: "success",
+            data: projectSkill
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+async function restoreProjectSkill(req, res) {
+    const pId = req.query.pId;
+    if (!pId) {
+        return res.status(400).json({ message: 'pId is required' });
+    }
+    const sId = req.query.sId;
+    if (!sId) {
+        return res.status(400).json({ message: 'sId is required' });
+    }
+    try {
+        const projectSkill = await projectSkillModel.restore({ pId: pId, sId: sId });
         if (!projectSkill) {
             return res.status(404).json({ message: 'project skill not found' });
         }
@@ -106,5 +130,6 @@ async function RemoveProjectSkill(req, res) {
 module.exports = {
     GetProjectSkills,
     AddProjectSkill,
-    RemoveProjectSkill
+    RemoveProjectSkill,
+    restoreProjectSkill
 }

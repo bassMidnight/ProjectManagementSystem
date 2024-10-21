@@ -560,7 +560,40 @@ async function deleteEmployeeFromProject(req, res) {
       throw new Error("Project not found.");
     }
 
-    const deleteResult = await ProjectMemberModel.findOneAndDelete({
+    const deleteResult = await ProjectMemberModel.delete({
+      eId: employeeId,
+      pId: projectId,
+    });
+
+    if (!deleteResult) {
+      throw new Error("Failed to delete employee from project.");
+    }
+
+    return res
+      .status(200)
+      .json({
+        error: false,
+        message: "Employee deleted from project successfully.",
+      });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: true, message: error.message });
+  }
+}
+
+async function restoreEmployeeFromProject(req, res) {
+  const employeeId = req.query.eId;
+  if (!employeeId) {
+    throw new Error("Employee ID is required.");
+  }
+  
+  const projectId = req.query.pId;
+  if (!projectId) {
+    throw new Error("Project ID is required.");
+  }
+
+  try {
+    const deleteResult = await ProjectMemberModel.restore({
       eId: employeeId,
       pId: projectId,
     });
@@ -676,8 +709,8 @@ async function deleteEmployeesListFromProject(req, res) {
     const employeeIds = req.body.eIds;  // Expecting a list of employee IDs in the request body
     const projectId = req.body.pId;
 
-    console.log(employeeIds);
-    console.log(projectId);
+    // console.log(employeeIds);
+    // console.log(projectId);
 
     if (!employeeIds || employeeIds.length === 0) {
         return res.status(400).json({ error: true, message: 'Employee IDs are required.' });
@@ -703,7 +736,7 @@ async function deleteEmployeesListFromProject(req, res) {
                 continue;
             }
 
-            const deleteResult = await ProjectMemberModel.findOneAndDelete({
+            const deleteResult = await ProjectMemberModel.delete({
                 eId: employeeId,
                 pId: projectId
             });
@@ -727,6 +760,60 @@ async function deleteEmployeesListFromProject(req, res) {
     }
 }
 
+async function restoreEmployeesListFromProject(req, res) {
+  const employeeIds = req.body.eIds;  // Expecting a list of employee IDs in the request body
+  const projectId = req.body.pId;
+
+  // console.log(employeeIds);
+  // console.log(projectId);
+
+  if (!employeeIds || employeeIds.length === 0) {
+      return res.status(400).json({ error: true, message: 'Employee IDs are required.' });
+  }
+
+  if (!projectId) {
+      return res.status(400).json({ error: true, message: 'Project ID is required.' });
+  }
+
+  try {
+      const project = await ProjectModel.findOne({ id: projectId });
+      if (!project) {
+          throw new Error('Project not found.');
+      }
+
+      const failedEmployees = [];
+      const deletedEmployees = [];
+
+      for (let employeeId of employeeIds) {
+          const employee = await EmployeeModel.findOne({ eId: employeeId });
+          if (!employee) {
+              failedEmployees.push(employeeId);  // Record failed deletions
+              continue;
+          }
+
+          const deleteResult = await ProjectMemberModel.delete({
+              eId: employeeId,
+              pId: projectId
+          });
+
+          if (deleteResult) {
+              deletedEmployees.push(employeeId);  // Record successful deletions
+          } else {
+              failedEmployees.push(employeeId);
+          }
+      }
+
+      return res.status(200).json({
+          error: false,
+          message: "Employees processed successfully.",
+          deletedEmployees,
+          failedEmployees
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: true, message: error.message });
+  }
+}
 
 // Export the function
 module.exports = {
@@ -741,6 +828,7 @@ module.exports = {
     getworkloadHistoryDetail,
     addEmployeeToProject,
     deleteEmployeeFromProject,
+    restoreEmployeeFromProject,
     getAllEmployee,
 
     addEmployeesListToProject,

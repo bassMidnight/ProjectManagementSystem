@@ -125,12 +125,29 @@ async function DeleteProject(req, res) {
         return res.status(400).json({ error: true, message: 'id is required' });
     }
     try {
-        const deletedProject = await Project.findOneAndDelete({id});
+        const deletedProject = await Project.deleteById(id);
         if (!deletedProject) {
             return res.status(404).json({error: true, message: 'Project not found' });
         }
         return res.status(200).json({error: false, message: 'Delete success', data: deletedProject });
     } catch (error) {
+        return res.status(500).json({error: true, message: error.message });
+    }
+}
+
+async function restoreProject(req, res) {
+    const id = req.query.id;
+    if (!id) {
+        return res.status(400).json({ error: true, message: 'id project is required' });
+    }
+    try {
+        const restoredProject = await Project.restore({_id : id});
+        if (!restoredProject) { 
+            return res.status(404).json({error: true, message: 'Project not found' });  
+        }
+        return res.status(200).json({error: false, message: 'Restore success', data: restoredProject });
+    } catch (error) {
+        console.log(error.message);
         return res.status(500).json({error: true, message: error.message });
     }
 }
@@ -143,5 +160,6 @@ module.exports = {
 
     CreateProject,
     UpdateProject,
-    DeleteProject
+    DeleteProject,
+    restoreProject
 };

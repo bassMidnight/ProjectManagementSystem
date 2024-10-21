@@ -137,6 +137,28 @@ async function DeleteEmployeeById(req, res, next) {
     }
 }
 
+async function restoreEmployeeById(req, res) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: "required employee id" });
+    }
+    try {
+        const restoredEmployee = await employeeModel.restore({ eId });
+        if (!restoredEmployee) {
+            return res.status(404).json({ message: "employee not found" });
+        }
+        res.send({
+            status: 200,
+            message: "success",
+            data: restoredEmployee,
+        })
+        
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 
 async function GetEmployeeAllProject(req, res, next) {
     try {
@@ -254,6 +276,7 @@ module.exports = {
     UpdateEmployeeById,
     CreateEmployee,
     DeleteEmployeeById,
+    restoreEmployeeById,
     GetEmployeeAllProject,
     GetEmployeeProjectMemberWorkload,
     GetEmployeeWorkloadHistory

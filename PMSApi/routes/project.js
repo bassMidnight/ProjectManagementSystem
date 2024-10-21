@@ -15,6 +15,8 @@ router.put('/', middleware.tokenValidator, controller.UpdateProject);
 
 router.delete('/', middleware.tokenValidator, controller.DeleteProject);
 
+router.put('/restore', middleware.tokenValidator, controller.restoreProject);
+
 router.get('/projectByUser', middleware.tokenValidator, controller.getProjectsByUser);
 
 router.get('/userByProject', middleware.tokenValidator, controller.getUserByProject);
@@ -30,6 +32,10 @@ router.post('/projectskill', middleware.tokenValidator, async function(req, res)
 
 router.delete('/projectskill', middleware.tokenValidator, async function(req, res) {
     await projectSkillController.RemoveProjectSkill(req, res);
+});
+
+router.put('/projectskill/restore', middleware.tokenValidator, async function(req, res) {
+    await projectSkillController.restoreProjectSkill(req, res);
 });
 
 module.exports = router;
