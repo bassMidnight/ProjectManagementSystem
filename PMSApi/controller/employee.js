@@ -1,10 +1,8 @@
 const employeeModel = require("../models/employee.model");
-const { weeklyMemberProjectQueryByWeek, weeklyMemberQueryByWeek, weeklyQueryByPId } = require("../utils/weeklyQuery");
+const { weeklyMemberProjectQueryByWeek, weeklyQueryByPId } = require("../utils/weeklyQuery");
 const { getWeekNumber } = require("../utils/getWeekNumber");
 const workloadModel = require("../models/workload.model");
-const e = require("express");
 const projectModel = require("../models/project.model");
-const projectMemberModel = require("../models/projectMember.model");
 
 async function GetEmployees(req, res, next) {
     if (req.query.eId) {
@@ -18,14 +16,15 @@ async function GetEmployees(req, res, next) {
             data: employees,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
 
 async function GetEmployeeById(req, res, next) {
     const eId = req.query.eId;
-    const employee = await employeeModel.findOne({ eId });
     try {
+        const employee = await employeeModel.findOne({ eId });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
         }
@@ -35,6 +34,7 @@ async function GetEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -91,6 +91,7 @@ async function CreateEmployee (req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -115,12 +116,17 @@ async function UpdateEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
 
 
 async function DeleteEmployeeById(req, res, next) {
+    const eId = req.query.eId;
+    if (!eId) {
+        return res.status(400).json({ message: "eId is required" });
+    }
     try {
         const eId = req.query.eId;
         const employee = await employeeModel.delete({ eId });
@@ -133,6 +139,7 @@ async function DeleteEmployeeById(req, res, next) {
             data: employee,
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -157,6 +164,7 @@ async function GetEmployeeAllProject(req, res, next) {
             data: [projects],
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }
@@ -180,6 +188,7 @@ async function GetEmployeeProjectMemberWorkload(req, res, next) {
             data: [projects],
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: error.message });
     }
 }

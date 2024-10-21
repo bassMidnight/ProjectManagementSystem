@@ -1,6 +1,6 @@
 const EmployeeSkillModel = require('../models/EmployeeSkill.model');
 const skillModel = require('../models/skill.model');
-const { badRequest, dataNotFound } = require('../utils/response');
+const EmployeeModel = require('../models/employee.model');
 
 async function GetEmployeeSkills (req, res, next) {
     const eId = req.query.eId ;
@@ -10,6 +10,10 @@ async function GetEmployeeSkills (req, res, next) {
         });
     }
     try {
+        const checkEmployee = await EmployeeModel.findOne({ eId });
+        if (!checkEmployee) {
+            return res.status(404).json({ message: 'employee not found' });
+        }
         const employeeSkills = await EmployeeSkillModel.aggregate([
             {
                 $lookup: {
@@ -47,7 +51,6 @@ async function GetEmployeeSkills (req, res, next) {
     }
 }
 
-
 async function AddEmployeeSkill (req, res, next) {
     const eId = req.query.eId;
     if (!eId) {
@@ -62,6 +65,10 @@ async function AddEmployeeSkill (req, res, next) {
         })
     }
     try {
+        const checkEmployee = await EmployeeModel.findOne({ eId });
+        if (!checkEmployee) {
+            return res.status(404).json({ message: 'employee not found' });
+        }
         const checkSkill = await skillModel.findOne({ id: sId });
         if (!checkSkill) {
             return res.status(404).json({ message: 'skill not found' });
