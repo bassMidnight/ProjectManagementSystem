@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongooseDelete = require('mongoose-delete');
 
 const skillSchema = new mongoose.Schema({
     id: String,
@@ -26,5 +27,7 @@ skillSchema.pre('save', async function (next) {
 
     next();
 });
+
+skillSchema.plugin(mongooseDelete, { deletedAt: true, overrideMethods: 'all' });
 
 module.exports = mongoose.model('Skill', skillSchema);

@@ -97,12 +97,15 @@ async function CreateEmployee (req, res, next) {
 }
 
 async function UpdateEmployeeById(req, res, next) {
-    const eId = req.query.eId;
+    const eId = req.body.eId;
     if (!eId) {
-        return res.status(400).json({ message: "eId is required" });
+        return res.status(400).json({ message: "required eId" });
+    }
+    const one_mail = req.body.one_mail;
+    if (!one_mail) {
+        return res.status(400).json({ message: "required one_mail" });
     }
     try {
-        const eId = req.body.eId;
         const employee = await employeeModel.findOneAndUpdate({ eId }, req.body, { new: true });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
@@ -125,7 +128,8 @@ async function DeleteEmployeeById(req, res, next) {
         return res.status(400).json({ message: "eId is required" });
     }
     try {
-        const employee = await employeeModel.findOneAndDelete({ eId });
+        const eId = req.query.eId;
+        const employee = await employeeModel.delete({ eId });
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
         }
