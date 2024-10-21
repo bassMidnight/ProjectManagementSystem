@@ -163,7 +163,7 @@ async function GetAllProjectsAndWorkloadByDate(req, res) {
         let date = req.query.date;
         let eId = req.query.eid;
         let Week = getWeekNumber(new Date(date));
-        
+
         const projects = await weeklyMemberProjectQueryByWeek(eId, Week);
 
         res.status(200).json({
@@ -273,7 +273,6 @@ async function GetMembersBySkill(req, res, next) {
                 length: employees.length,
                 members: employees.map(employee => {
                     const employeeWorkloads = workloads.filter(w => w.eId === employee.eId);
-                    const employeeSkills = employeesBySkill.filter(es => es.eId === employee.eId);
                     return {
                         _id: employee.eId,
                         employeeName: employee.name,
