@@ -7,6 +7,10 @@ async function GetProjectSkills(req, res) {
         return res.status(400).json({ message: 'pId is required' });
     }
     try {
+        const project = await projectModel.findOne({ id: pId });
+        if (!project) {
+            return res.status(400).json({ message: 'project not found' });
+        }
         const projectskills = await projectSkillModel.aggregate([
             {
                 $lookup: {
@@ -54,7 +58,10 @@ async function AddProjectSkill(req, res) {
         return res.status(400).json({ message: 'skill id is required' });
     }
     try {
-
+        const checkProject = await projectModel.findOne({ id: projectId });
+        if (!checkProject) {
+            return res.status(400).json({ message: 'project not found' });
+        }
         const checkSkill = await Skill.findOne({ id: skillId });
         if (!checkSkill) {
             return res.status(400).json({ message: 'skill not found' });

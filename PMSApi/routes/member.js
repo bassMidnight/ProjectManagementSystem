@@ -42,6 +42,10 @@ router.post('/currentworkload', middleware.tokenValidator, async function(req, r
     await controller.GetEmployeesCurrentWeeklyWorkload(req, res);
 });
 
+router.get('/byskill', middleware.tokenValidator, async function(req, res){
+    await controller.GetMembersBySkill(req, res);
+});
+
 
 
 module.exports = router;

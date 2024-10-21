@@ -12,7 +12,8 @@ const { weeklyQueryByEId, weeklyQueryByEIds,
         weeklyMemberProjectQueryByWeeks, MemberWorkloadOverview,
         MemberWorkloadOverviewMonthly, MemberWorkloadOverviewTwelveMonths,
         weeklyMemberQueryByWeekByNameOrProject, weeklyMemberQueryByWeekWithoutLead
-    } = require("../utils/weeklyQuery")
+    } = require("../utils/weeklyQuery");
+const workloadModel = require("../models/workload.model");
 
 async function GetAllMembers(req, res) {
     try {
@@ -252,6 +253,53 @@ async function getAllMembersAndWorkload(req, res) {
     }
 }
 
+async function GetMembersBySkill(req, res, next) {
+    const sId = req.query.sId;
+    if (!sId) {
+        return res.status(400).json({
+            message: 'skill id is required'
+        })
+    }
+    try {
+        const employeeBySkill = await EmployeeSkillModel.find({ sId: sId });
+        const employeeIds = employeeBySkill.map(item => item.eId);
+        const employees = await Employee.find({ eId: { $in: employeeIds } });
+        const workloads = await workloadModel.find({ eId: { $in: employeeIds } });
+
+        const result = {
+            status: "200",
+            message: "success",
+            data: {
+                length: employees.length,
+                members: employees.map(employee => {
+                    const employeeWorkloads = workloads.filter(w => w.eId === employee.eId);
+                    return {
+                        _id: employee.eId,
+                        employeeName: employee.name,
+                        employeeSurname: employee.surname,
+                        employeeShortName: employee.shortname,
+                        employeePosition: employee.position,
+                        employeeStartDate: employee.startDate,
+                        employeeOneId: employee.branch,
+                        employeeDepartment: employee.department,
+                        workload: employeeWorkloads.length > 0 
+                            ? employeeWorkloads.reduce((sum, w) => sum + w.workload, 0) / employeeWorkloads.length 
+                            : 0
+                    };
+                })
+            }
+        };
+
+        res.send({
+            status: 200,
+            message: "success",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 // Helper function to get the week number
 
 module.exports = {
@@ -264,4 +312,5 @@ module.exports = {
     GetMemberWorkloadOverview,
     GetMemberWorkloadOverviewMonthly,
     GetAllMembersByNameOrProject,
+    GetMembersBySkill
 }
