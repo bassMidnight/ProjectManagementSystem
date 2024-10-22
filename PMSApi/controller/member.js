@@ -64,14 +64,30 @@ async function GetAllProjectsAndWorkload(req, res) {
     try {
         let eId = req.query.eid;
         let date = req.query.date;
+        let account_id = req.query.account_id;        
         let currentWeek = getWeekNumber(date ? new Date(date) : new Date());
         
         const projects = await weeklyMemberProjectQueryByWeek(eId, currentWeek,date ? new Date(date).getFullYear() : new Date().getFullYear());
-
+        
+        const employee = await Employee.findOne({ one_id : account_id });
+        
+        let result = []
+        for (const project of projects) {
+            let data = {}
+            data._id = project._id;
+            data.numberOfMembers = project.numberOfMembers;
+            data.totalWorkload = project.totalWorkload || 0;
+            data.projectName = project.projectName;
+            data.projectId = project.projectId;
+            data.lead = project.lead;
+            data.action = (employee.eId == project.lead) ? "edit" : "view"
+            result.push(data);
+        }
+        
         res.status(200).json({
             status: "200",
             message: "success",
-            data: projects
+            data: result
         });
     } catch (err) {
         console.error("Error in GetAllProjectsAndWorkload:", err);

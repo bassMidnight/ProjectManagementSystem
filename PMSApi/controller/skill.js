@@ -49,6 +49,13 @@ async function CreateSkill (req, res, next) {
     }
     try {
         // const id = req.body.name.slice(0, 4).toLowerCase()+"001";
+        const checkSkill = await skillModel.findOne({name: name});
+        if (checkSkill) {
+            return res.status(400).json({
+                message: 'Skill already exists'
+            })
+        }
+
         const skill = await skillModel.create({
             // id: id,
             name: name,

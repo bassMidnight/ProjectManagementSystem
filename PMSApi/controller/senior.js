@@ -95,9 +95,7 @@ async function getGraph(req, res) {
             .json({ error: true, message: "Invalid graph mode" });
         }
 
-        return res
-        .status(200)
-        .json({ error: false, message: "Success", data: workloads });
+        return res.status(200).json({ error: false, message: "Success", data: workloads });
     } catch (error) {
         console.error(error);
         return res
@@ -141,27 +139,68 @@ async function getWorkloadsForGraphMonth(projectId, date) {
     },
   ]);
 
-  const result = workloads.map((workload) => ({
-    name: `${
-      getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).startDate
-    } - ${
-      getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).endDate
-    }`,
-    avgWorkload: workload.avgWorkload
-      ? workload.avgWorkload.toFixed(2)
-      : `0.00`,
-  }));
+  // console.log(workloads);
+  
+  // const result = workloads.map((workload) => ({
+  //   name: `${
+  //     getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).startDate
+  //   } - ${
+  //     getWeekStartAndEnd(workload._id.weekOfYear, workload._id.year).endDate
+  //   }`,
+  //   avgWorkload: workload.avgWorkload
+  //     ? workload.avgWorkload.toFixed(2)
+  //     : `0.00`,
+  // }));
 
+    // สร้าง array สำหรับ 12 สัปดาห์ล่าสุด
+    let result = [];
+    for (let i = 11; i >= 0; i--) {
+      const weekNumber = currentWeek - i;
+      const weekData = workloads.find(
+        (w) => w.weekOfYear === weekNumber && w.year === currentYear
+      );
+  
+      // หากไม่มีข้อมูลในสัปดาห์นั้น จะตั้งค่า avgWorkload = 0
+      if (weekData) {
+        result.push({
+          name: `${
+            getWeekStartAndEnd(weekData.weekOfYear, weekData.year).startDate
+          } - ${
+            getWeekStartAndEnd(weekData.weekOfYear, weekData.year).endDate
+          }`,
+          avgWorkload: weekData.avgWorkload
+            ? weekData.avgWorkload.toFixed(2)
+            : `0.00`,
+        });
+      } else {
+        result.push({
+          name: `${
+            getWeekStartAndEnd(weekNumber, currentYear).startDate
+          } - ${
+            getWeekStartAndEnd(weekNumber, currentYear).endDate
+          }`,
+          avgWorkload: `0.00`,
+        });
+      }
+    }
+  
   return result;
 }
 
 async function getGraphYear(projectId, date) {
+  // console.log(date);
+  
   let currentDate;
-  currentDate = date ? new Date(date) : new Date();
-
+  currentDate = new Date(date) || new Date();
+  currentDate.setHours(23, 59, 59, 999);
+  // console.log("currentDate : ", currentDate);
+  
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(currentDate.getFullYear() - 1); // วันที่ย้อนหลัง 12 เดือน
+  oneYearAgo.setHours(23, 59, 59, 999);
+  // console.log("oneYearAgo : ", oneYearAgo);
 
+  
   const workloadsByMonth = await WorkloadModel.aggregate([
     {
       $match: {
@@ -194,10 +233,33 @@ async function getGraphYear(projectId, date) {
 
   // console.log(workloadsByMonth);
 
-  let result = workloadsByMonth.map((workload) => ({
-    name: `${workload._id.month}-${workload._id.year}`,
-    avgWorkload: workload.avgWorkload.toFixed(2),
-  }));
+  // let result = workloadsByMonth.map((workload) => ({
+  //   name: `${workload._id.month}-${workload._id.year}`,
+  //   avgWorkload: workload.avgWorkload.toFixed(2),
+  // }));
+
+  // สร้าง array เปล่าสำหรับเก็บผลลัพธ์
+  let result = [];
+
+  // วนลูปครบ 12 เดือนย้อนหลัง
+  for (let i = 11; i >= 0; i--) {
+    const current = new Date();
+    current.setMonth(current.getMonth() - i);
+
+    const month = current.getMonth() + 1; // เดือน 1-12
+    const year = current.getFullYear();
+
+    // ตรวจสอบว่ามีข้อมูลของเดือนและปีนี้หรือไม่
+    const workload = workloadsByMonth.find(
+      (w) => w._id.month === month && w._id.year === year
+    );
+
+    // ถ้าไม่มีข้อมูลให้ตั้งค่า avgWorkload = 0
+    result.push({
+      name: `${month}-${year}`,
+      avgWorkload: workload ? workload.avgWorkload.toFixed(2) : "0.00",
+    });
+  }
 
   return result;
 }
@@ -229,6 +291,7 @@ async function getProjectMenberList(req, res) {
     const workloads = await WorkloadModel.find({
       weekOfYear: currentWeek,
       eId: { $in: employees.map((employee) => employee.eId) }, // กรอง workload.eId ที่ตรงกับ employees.eId
+      pId: projectId,
       createdAt: {
         $gte: startOfYear,
         $lte: endOfYear,

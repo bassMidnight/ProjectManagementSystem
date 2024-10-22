@@ -6,7 +6,7 @@ const { getWeekNumber } = require("../utils/getWeekNumber");
 const { getStartEndDateFromYear } = require("../utils/formatDate");
 
 async function getProjectOrLead(req, res) {
-    const queryDate = req.query.date;
+    const queryDate = req.query.Date || `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
     const currentDate = queryDate ? new Date(queryDate) : new Date();
     const currentWeek = getWeekNumber(currentDate);
     const Mode = req.query.Mode || "project";
@@ -35,7 +35,7 @@ async function getProjectOrLead(req, res) {
 }
 
 async function modeProject(Search ,currentWeek, queryDate) {
-
+    
     const projectTop3 = await projectModel.aggregate([
         {
             $lookup: {
@@ -346,6 +346,7 @@ async function getHistory(req, res) {
     let {
         employeeId,
         projectId,
+        search,
         date,
         page = 1,
         size = 10
@@ -354,6 +355,7 @@ async function getHistory(req, res) {
     size = parseInt(size);
     const offset = (page - 1) * size;
 
+    let searchString = search || "";
     try {
         const filterQuery = {
             ...(employeeId && { eId: employeeId }),
@@ -363,8 +365,50 @@ async function getHistory(req, res) {
         const { startOfYear, endOfYear } = getStartEndDateFromYear(date);
         filterQuery.createdAt = { $gte: startOfYear, $lte: endOfYear };
 
+        // const workloads = await workloadModel.aggregate([
+        //     { $match: filterQuery },
+        //     {
+        //         $lookup: {
+        //             from: "projects",
+        //             localField: "pId",
+        //             foreignField: "id",
+        //             as: "projectData"
+        //         }
+        //     },
+        //     { $unwind: "$projectData" },
+        //     {
+        //         $lookup: {
+        //             from: "employees",
+        //             localField: "eId",
+        //             foreignField: "eId",
+        //             as: "employeeData"
+        //         }
+        //     },
+        //     { $unwind: "$employeeData" },
+        //     {
+        //         $project: {
+        //             _id: 1,
+        //             pId: 1,
+        //             eId: 1,
+        //             workload: 1,
+        //             weekOfYear: 1,
+        //             desc: 1,
+        //             projectName: "$projectData.projectName",
+        //             employeeName: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] },
+        //             shortname: "$employeeData.shortname",
+        //             createdAt: 1,
+        //             notation: 1,
+
+        //         }
+        //     },
+        //     { $sort: { createdAt: -1 } },
+        //     { $skip: offset },
+        //     { $limit: size }
+        // ]);
         const workloads = await workloadModel.aggregate([
-            { $match: filterQuery },
+            { 
+                $match: filterQuery // กรองข้อมูลเบื้องต้นที่มาจาก query หรือ parameter
+            },
             {
                 $lookup: {
                     from: "projects",
@@ -373,7 +417,9 @@ async function getHistory(req, res) {
                     as: "projectData"
                 }
             },
-            { $unwind: "$projectData" },
+            { 
+                $unwind: "$projectData" 
+            },
             {
                 $lookup: {
                     from: "employees",
@@ -382,7 +428,25 @@ async function getHistory(req, res) {
                     as: "employeeData"
                 }
             },
-            { $unwind: "$employeeData" },
+            { 
+                $unwind: "$employeeData" 
+            },
+            {
+                $match: {
+                    $or: [
+                        { "projectData.projectName": { $regex: searchString, $options: "i" } }, // กรองชื่อโครงการ (LIKE case-insensitive)
+                        { 
+                            $expr: { 
+                                $regexMatch: {
+                                    input: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] }, // รวมชื่อและนามสกุล
+                                    regex: searchString,
+                                    options: "i" // กรองด้วย LIKE (ไม่แยกเล็กใหญ่)
+                                } 
+                            } 
+                        }
+                    ]
+                }
+            },
             {
                 $project: {
                     _id: 1,
@@ -392,17 +456,17 @@ async function getHistory(req, res) {
                     weekOfYear: 1,
                     desc: 1,
                     projectName: "$projectData.projectName",
-                    employeeName: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] },
+                    employeeName: { $concat: ["$employeeData.name", " ", "$employeeData.surname"] }, // รวมชื่อและนามสกุล
                     shortname: "$employeeData.shortname",
                     createdAt: 1,
-                    notation: 1,
-
+                    notation: 1
                 }
             },
             { $sort: { createdAt: -1 } },
             { $skip: offset },
             { $limit: size }
         ]);
+        
 
         const workloadCount = await workloadModel.countDocuments(filterQuery);
 
