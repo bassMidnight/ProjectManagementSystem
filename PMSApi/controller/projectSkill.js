@@ -71,6 +71,11 @@ async function AddProjectSkill(req, res) {
         if (!project) {
             return res.status(400).json({ message: 'project not found' });
         }
+
+        const checkProjectSkill = await projectSkillModel.findOne({ pId: projectId, sId: skillId });
+        if (checkProjectSkill) {
+            return res.status(400).json({ message: 'project skill already exists' });
+        }
         
         const projectSkill = await projectSkillModel.create({
             pId: projectId,
